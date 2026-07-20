@@ -5,14 +5,32 @@ export const runtime = "nodejs";
 
 // GET /api/members
 export async function GET() {
-  const db = supabaseAdmin();
-  const { data, error } = await db
-    .from("members")
-    .select("*")
-    .order("created_at", { ascending: true });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    // 진단: 환경변수가 실제로 읽히는지 확인
+    if (!url || !key) {
+      return NextResponse.json({
+        error: "ENV_MISSING",
+        hasUrl: !!url,
+        hasServiceKey: !!key,
+        urlStart: url ? url.slice(0, 20) : null,
+      }, { status: 500 });
+    }
+    const db = supabaseAdmin();
+    const { data, error } = await db
+      .from("members")
+      .select("*")
+      .order("created_at", { ascending: true });
+    if (error) {
+      return NextResponse.json({ error: "DB_ERROR", detail: error.message, code: error.code }, { status: 500 });
+    }
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: "CRASH", detail: String(e && e.message || e) }, { status: 500 });
+  }
 }
+
 
 // POST /api/members  body: { name }
 export async function POST(req) {
