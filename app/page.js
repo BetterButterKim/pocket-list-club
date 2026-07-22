@@ -271,7 +271,14 @@ export default function Page() {
     else say("저장 중 문제가 생겼어요.");
     reload();
   };
-  const doDeleteRecord=async(id,memberId)=>{ await api.deleteRecord(id,memberId); say("삭제했어요."); reload(); };
+  const doDeleteRecord=async(id,memberId)=>{
+    // 본인 확인용 ID가 없으면(다른 기기/첫 방문) 해당 기록의 주인으로 등록
+    const myId = me || memberId;
+    if(!me){ setMe(myId); setMeState(myId); }
+    const res = await api.deleteRecord(id, myId);
+    if(res?.ok){ say("삭제했어요."); reload(); }
+    else say(res?.error || "삭제하지 못했어요.");
+  };
 
   const memberOf=(id)=>members.find(m=>m.id===id);
   const shown=records.filter(r=>(view==="all"||r.member_id===view)&&(selNum==null||r.num===selNum));
@@ -328,18 +335,52 @@ export default function Page() {
                 <button onClick={()=>requestDeleteMember(view)} className="btn-ghost-danger" style={{borderRadius:9999,padding:"4px 12px",fontSize:12}}>멤버 삭제</button>
               </>)}
             </div>
-            <div style={{marginTop:12,display:"flex",flexWrap:"wrap",gap:6}}>
-              <button className={selNum==null?"pill-active":"pill"} style={{borderRadius:8,padding:"6px 10px",fontSize:14,fontWeight:700}} onClick={()=>setSelNum(null)}>모두</button>
-              {curPockets.map(it=>(
-                <button key={it.num} className={selNum===it.num?"pill-active":"pill"} style={{borderRadius:8,padding:"6px 10px",fontSize:14,fontWeight:700}}
-                  onClick={()=>setSelNum(it.num)} title={it.title||"이름 미설정"}>
-                  {it.num}{countFor(view,it.num)>0&&<span style={{marginLeft:4,fontSize:10,opacity:0.7}}>{countFor(view,it.num)}</span>}
+            {/* 포켓리스트 1~10 전체 목록 */}
+            <div className="card" style={{marginTop:12,borderRadius:16,overflow:"hidden"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                padding:"10px 14px",borderBottom:"1px solid #eadfd0"}}>
+                <span style={{fontSize:13,fontWeight:900}}>포켓리스트 10</span>
+                <button onClick={()=>setSelNum(null)}
+                  className={selNum==null?"btn-muted":"btn-ghost"}
+                  style={{borderRadius:9999,padding:"4px 12px",fontSize:11,fontWeight:700}}>
+                  전체 인증 보기
                 </button>
-              ))}
+              </div>
+              {curPockets.map(it=>{
+                const cnt=countFor(view,it.num);
+                const on=selNum===it.num;
+                return (
+                  <div key={it.num}>
+                    <button onClick={()=>setSelNum(on?null:it.num)}
+                      style={{width:"100%",display:"flex",alignItems:"center",gap:10,
+                        padding:"11px 14px",background:on?"#F6EFE2":"transparent",
+                        border:"none",borderTop:it.num===1?"none":"1px solid #f2e9db",
+                        cursor:"pointer",textAlign:"left"}}>
+                      <span className="slab" style={{flexShrink:0,fontSize:14,width:26,
+                        color:it.title?"#F59A23":"#c3b4a4"}}>{it.num}.</span>
+                      <span style={{flex:1,minWidth:0,fontSize:14,fontWeight:it.title?700:400,
+                        color:it.title?"#453730":"#c3b4a4",
+                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        {it.title||"아직 정하지 않았어요"}
+                      </span>
+                      {cnt>0&&(
+                        <span style={{flexShrink:0,fontSize:11,fontWeight:700,color:"#8a7a6d",
+                          background:"#F1E9DD",borderRadius:9999,padding:"2px 8px"}}>
+                          인증 {cnt}
+                        </span>
+                      )}
+                      <span className="t-faint" style={{flexShrink:0,fontSize:11}}>{on?"▲":"▼"}</span>
+                    </button>
+                    {on&&(
+                      <div style={{padding:"0 14px 14px"}}>
+                        <PocketEditor key={view+"-"+it.num} item={it}
+                          onSave={(t,d)=>savePocketItem(view,it.num,t,d)}/>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            {selNum!=null&&(
-              <PocketEditor key={view+"-"+selNum} item={curPockets.find(i=>i.num===selNum)} onSave={(t,d)=>savePocketItem(view,selNum,t,d)}/>
-            )}
           </div>
         )}
       </header>
@@ -383,13 +424,13 @@ function PocketEditor({item,onSave}) {
   useEffect(()=>{setTitle(item?.title||"");setDesc(item?.description||"");},[item?.num]);
   const dirty=title!==(item?.title||"")||desc!==(item?.description||"");
   return (
-    <div className="card" style={{marginTop:12,borderRadius:16,padding:16}}>
+    <div style={{background:"#FAF6EF",border:"1px solid #eadfd0",borderRadius:12,padding:14}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <span className="slab t-orange" style={{fontSize:18}}>{item.num})</span>
+        <span className="slab t-orange" style={{fontSize:16}}>{item.num})</span>
         <input value={title} maxLength={100} onChange={e=>setTitle(e.target.value)} placeholder="포켓리스트 이름 (100자 이내)" className="bare-input" style={{flex:1,fontSize:15,fontWeight:700}}/>
         <span className="t-11 t-faint">{title.length}/100</span>
       </div>
-      <textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="세부 설명 — 왜 이걸 골랐는지, 어떻게 실행할지 적어두면 좋아요." rows={2} className="soft-area" style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:8,fontSize:14}}/>
+      <textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="세부 설명 — 왜 이걸 골랐는지, 어떻게 실행할지 적어두면 좋아요." rows={2} className="soft-area" style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:8,fontSize:14,background:"#fff"}}/>
       <div style={{marginTop:8,display:"flex",alignItems:"center",justifyContent:"flex-end",gap:8}}>
         {!dirty&&(title||desc)&&<span className="t-11 t-faint">저장됨 ✓</span>}
         <button onClick={()=>dirty&&onSave(title,desc)} className={dirty?"btn-orange":"btn-muted"} style={{borderRadius:9999,padding:"6px 16px",fontSize:14,fontWeight:700}}>저장</button>
@@ -411,7 +452,7 @@ function RecordCard({rec,member,showName,isMine,onDelete,onOpen}) {
           </span>
           <span style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
             <button onClick={()=>saveImage(rec.image_url,fname)} className="bare-input t-orange" style={{fontWeight:700,fontSize:11,cursor:"pointer",padding:0}}>저장</button>
-            {isMine&&<button onClick={onDelete} className="x-btn" title="삭제" style={{fontSize:12}}>✕</button>}
+            <button onClick={onDelete} className="x-btn" title="삭제" style={{fontSize:12}}>✕</button>
           </span>
         </div>
       </div>
