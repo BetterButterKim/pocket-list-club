@@ -113,6 +113,12 @@ const CSS = `
 .rec-memo{font-size:10px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.3);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:6px;padding:2px 8px;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%;}
 @media(hover:hover){.rec-overlay{opacity:0;transition:opacity .2s;}.rec-card:hover .rec-overlay{opacity:1;}}
 @media(hover:none){.rec-chip{font-size:9px;padding:1px 6px;}.rec-memo{display:none;}}
+.main-tabs{display:flex;border-bottom:1px solid #e2d6c8;margin-top:20px;}
+.main-tab{flex:1;padding:10px 0;font-size:14px;font-weight:700;background:none;border:none;color:#b6a795;cursor:pointer;position:relative;text-align:center;transition:color .15s;}
+.main-tab-on{color:#453730;}
+.main-tab-on::after{content:'';position:absolute;bottom:-1px;left:25%;right:25%;height:2px;background:#453730;border-radius:1px;}
+.member-pills{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+.member-pills::-webkit-scrollbar{display:none;}
 `;
 
 function Logo() {
@@ -154,7 +160,9 @@ export default function Page() {
   const [pockets,setPockets]=useState({});   // {memberId:[{num,title,description}]}
   const [records,setRecords]=useState([]);
   const [loading,setLoading]=useState(true);
-  const [view,setView]=useState("all");
+  const [tab,setTab]=useState("feed");
+  const [feedFilter,setFeedFilter]=useState("all");
+  const [boardMember,setBoardMember]=useState("");
   const [addingMember,setAddingMember]=useState(false);
   const [newName,setNewName]=useState("");
   const [toast,setToast]=useState("");
@@ -188,14 +196,14 @@ export default function Page() {
   // URL의 ?member= 파라미터로 탭 상태를 동기화
   useEffect(()=>{
     const p=new URLSearchParams(window.location.search).get("member");
-    if(p) setView(p);
+    if(p){setTab("board");setBoardMember(p);}
     setMeState(getMe());
     reload();
   },[reload]);
   useEffect(()=>{
     const onPop=()=>{
       const p=new URLSearchParams(window.location.search).get("member");
-      setView(p||"all");
+      if(p){setTab("board");setBoardMember(p);}else{setTab("feed");}
     };
     window.addEventListener("popstate",onPop);
     return ()=>window.removeEventListener("popstate",onPop);
@@ -203,14 +211,28 @@ export default function Page() {
   // 30초마다 새 인증 자동 반영 (슬랙에서 올라온 것 포함)
   useEffect(()=>{ const t=setInterval(reload,30000); return ()=>clearInterval(t); },[reload]);
 
-  const changeView=(v)=>{
-    setView(v);
-    setJourneyNum(null);
+  const switchTab=(t)=>{
+    setTab(t);setJourneyNum(null);
     const url=new URL(window.location.href);
-    if(v==="all") url.searchParams.delete("member");
-    else url.searchParams.set("member",v);
+    if(t==="feed") url.searchParams.delete("member");
+    else if(boardMember) url.searchParams.set("member",boardMember);
     window.history.replaceState({},"",url);
   };
+  const pickBoardMember=(mid)=>{
+    setBoardMember(mid);setJourneyNum(null);
+    const url=new URL(window.location.href);
+    url.searchParams.set("member",mid);
+    window.history.replaceState({},"",url);
+  };
+  useEffect(()=>{
+    if(tab==="board"&&!boardMember&&members.length>0){
+      const mid=me||members[0].id;
+      setBoardMember(mid);
+      const url=new URL(window.location.href);
+      url.searchParams.set("member",mid);
+      window.history.replaceState({},"",url);
+    }
+  },[tab,boardMember,members,me]);
 
   const addMember=async()=>{
     const name=newName.trim(); if(!name)return;
@@ -267,9 +289,9 @@ export default function Page() {
   },[undoRec,undoDelete]);
 
   const memberOf=(id)=>members.find(m=>m.id===id);
-  const shown=view==="all"?records:records.filter(r=>r.member_id===view);
-  const curPockets=view!=="all"?(pockets[view]||emptyPockets(view)):null;
-  const curMember=view!=="all"?memberOf(view):null;
+  const feedShown=feedFilter==="all"?records:records.filter(r=>r.member_id===feedFilter);
+  const curPockets=boardMember?(pockets[boardMember]||emptyPockets(boardMember)):null;
+  const curMember=boardMember?memberOf(boardMember):null;
   const countFor=(mid,num)=>records.filter(r=>r.member_id===mid&&r.num===num).length;
 
   return (
@@ -283,63 +305,35 @@ export default function Page() {
           </div>
         </div>
 
-        <div style={{marginTop:24,display:"flex",flexWrap:"wrap",alignItems:"center",gap:8}}>
-          <button className={view==="all"?"chip-active":"chip"} style={{borderRadius:9999,padding:"6px 16px",fontSize:14,fontWeight:700}}
-            onClick={()=>changeView("all")}>전체</button>
-          {members.map(m=>(
-            <button key={m.id} className={view===m.id?"chip-active":"chip"} style={{borderRadius:9999,padding:"6px 16px",fontSize:14,fontWeight:700}}
-              onClick={()=>changeView(m.id)}>
-              {m.name}{me===m.id?" (나)":""}
-            </button>
-          ))}
-          {addingMember?(
-            <span style={{display:"flex",alignItems:"center",gap:4}}>
-              <input autoFocus value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addMember()} placeholder="이름"
-                className="input" style={{width:96,borderRadius:9999,padding:"6px 12px",fontSize:14}}/>
-              <button onClick={addMember} className="bare-input t-orange" style={{fontSize:14,fontWeight:700,padding:"0 4px",cursor:"pointer"}}>추가</button>
-              <button onClick={()=>setAddingMember(false)} className="bare-input t-sub" style={{fontSize:14,padding:"0 4px",cursor:"pointer"}}>취소</button>
-            </span>
-          ):(
-            <button onClick={()=>setAddingMember(true)} className="chip-dashed" style={{borderRadius:9999,padding:"6px 16px",fontSize:14}}>+ 멤버</button>
-          )}
+        <div className="main-tabs">
+          <button className={`main-tab${tab==="feed"?" main-tab-on":""}`} onClick={()=>switchTab("feed")}>피드</button>
+          <button className={`main-tab${tab==="board"?" main-tab-on":""}`} onClick={()=>switchTab("board")}>포켓 보드</button>
         </div>
 
-        {view!=="all"&&curMember&&(
-          <div style={{marginTop:20}}>
-            <PocketBoard member={curMember} list={curPockets} records={records.filter(r=>r.member_id===view)}
-              onOpen={(n)=>setJourneyNum(n)} boardRef={boardRef}/>
-            <div style={{marginTop:12,display:"flex",justifyContent:"center"}}>
-              <button disabled={boardSaving} onClick={async()=>{
-                  if(!boardRef.current||boardSaving)return;
-                  setBoardSaving(true);
-                  try{
-                    await downloadBoardPng(boardRef.current,`PLC_${curMember.name}_board.png`);
-                    say("보드 이미지를 저장했어요! 📥");
-                  }catch(e){
-                    console.error(e);
-                    say("이미지 저장에 실패했어요. 다시 시도해 주세요.");
-                  }finally{ setBoardSaving(false); }
-                }}
-                className="btn-ghost" style={{borderRadius:9999,padding:"8px 20px",fontSize:13,fontWeight:700,opacity:boardSaving?0.6:1}}>
-                {boardSaving?"저장 중…":"📥 보드 이미지 저장"}
-              </button>
-            </div>
-          </div>
-        )}
       </header>
 
-      {view==="all"&&(
+      {tab==="feed"&&(
         <main style={{maxWidth:960,margin:"0 auto",padding:"0 20px 96px"}}>
+          <div className="member-pills" style={{marginBottom:12}}>
+            <button className={feedFilter==="all"?"chip-active":"chip"} style={{borderRadius:9999,padding:"6px 14px",fontSize:13,fontWeight:700}}
+              onClick={()=>setFeedFilter("all")}>전체</button>
+            {members.map(m=>(
+              <button key={m.id} className={feedFilter===m.id?"chip-active":"chip"} style={{borderRadius:9999,padding:"6px 14px",fontSize:13,fontWeight:700}}
+                onClick={()=>setFeedFilter(m.id)}>
+                {m.name}{me===m.id?" (나)":""}
+              </button>
+            ))}
+          </div>
           {loading?(
             <p className="t-sub" style={{textAlign:"center",padding:"64px 0",fontSize:14}}>기록을 불러오는 중…</p>
-          ):shown.length===0?(
+          ):feedShown.length===0?(
             <div style={{textAlign:"center",padding:"64px 0"}}>
               <p style={{fontSize:18,fontWeight:700,margin:0}}>아직 인증이 없어요</p>
               <p className="t-sub" style={{marginTop:8,fontSize:14}}>슬랙에서 <b>/시도</b> 또는 <b>/달성</b>으로 첫 인증을 남겨보세요.</p>
             </div>
           ):(
             <div className="feed-grid">
-              {shown.map(r=>(
+              {feedShown.map(r=>(
                 <RecordCard key={r.id} rec={r} member={memberOf(r.member_id)} showName={true} isMine={me===r.member_id}
                   onOpen={()=>setViewRec(r)}
                   onDelete={()=>askConfirm("이 인증 기록을 삭제할까요?\n삭제 후 20초 안에는 되돌릴 수 있어요.",()=>doDeleteRecord(r))}/>
@@ -349,10 +343,55 @@ export default function Page() {
         </main>
       )}
 
-      {journeyNum!=null&&view!=="all"&&curPockets&&curMember&&(
+      {tab==="board"&&(
+        <main style={{maxWidth:960,margin:"0 auto",padding:"0 20px 96px"}}>
+          <div className="member-pills" style={{marginBottom:16,display:"flex",alignItems:"center"}}>
+            {members.map(m=>(
+              <button key={m.id} className={boardMember===m.id?"chip-active":"chip"} style={{borderRadius:9999,padding:"6px 14px",fontSize:13,fontWeight:700}}
+                onClick={()=>pickBoardMember(m.id)}>
+                {m.name}{me===m.id?" (나)":""}
+              </button>
+            ))}
+            {addingMember?(
+              <span style={{display:"flex",alignItems:"center",gap:4}}>
+                <input autoFocus value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addMember()} placeholder="이름"
+                  className="input" style={{width:96,borderRadius:9999,padding:"6px 12px",fontSize:14}}/>
+                <button onClick={addMember} className="bare-input t-orange" style={{fontSize:14,fontWeight:700,padding:"0 4px",cursor:"pointer"}}>추가</button>
+                <button onClick={()=>setAddingMember(false)} className="bare-input t-sub" style={{fontSize:14,padding:"0 4px",cursor:"pointer"}}>취소</button>
+              </span>
+            ):(
+              <button onClick={()=>setAddingMember(true)} className="chip-dashed" style={{borderRadius:9999,padding:"6px 14px",fontSize:13}}>+ 멤버</button>
+            )}
+          </div>
+          {curMember&&curPockets&&(
+            <div>
+              <PocketBoard member={curMember} list={curPockets} records={records.filter(r=>r.member_id===boardMember)}
+                onOpen={(n)=>setJourneyNum(n)} boardRef={boardRef}/>
+              <div style={{marginTop:12,display:"flex",justifyContent:"center"}}>
+                <button disabled={boardSaving} onClick={async()=>{
+                    if(!boardRef.current||boardSaving)return;
+                    setBoardSaving(true);
+                    try{
+                      await downloadBoardPng(boardRef.current,`PLC_${curMember.name}_board.png`);
+                      say("보드 이미지를 저장했어요! 📥");
+                    }catch(e){
+                      console.error(e);
+                      say("이미지 저장에 실패했어요. 다시 시도해 주세요.");
+                    }finally{ setBoardSaving(false); }
+                  }}
+                  className="btn-ghost" style={{borderRadius:9999,padding:"8px 20px",fontSize:13,fontWeight:700,opacity:boardSaving?0.6:1}}>
+                  {boardSaving?"저장 중…":"📥 보드 이미지 저장"}
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+      )}
+
+      {journeyNum!=null&&tab==="board"&&curPockets&&curMember&&(
         <JourneyPoster member={curMember}
           item={curPockets.find(it=>it.num===journeyNum)||{num:journeyNum,title:""}}
-          records={records.filter(r=>r.member_id===view&&r.num===journeyNum)}
+          records={records.filter(r=>r.member_id===boardMember&&r.num===journeyNum)}
           onClose={()=>setJourneyNum(null)}
           onOpenRec={(r)=>{setJourneyNum(null);setViewRec(r);}}/>
       )}
