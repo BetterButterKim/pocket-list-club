@@ -105,6 +105,14 @@ const CSS = `
 .journey-confetti{animation:plc-confetti 1.1s cubic-bezier(.15,.6,.3,1) both;pointer-events:none;}
 .journey-arrow{animation:plc-fade .35s ease both;}
 @media(prefers-reduced-motion:reduce){.journey-card,.journey-final,.journey-arrow,.journey-flap,.journey-img-pop,.journey-seal-pop{animation:none;}.journey-confetti{display:none;}}
+.feed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+@media(max-width:520px){.feed-grid{grid-template-columns:repeat(2,1fr);}}
+.rec-card{position:relative;border-radius:8px;overflow:hidden;cursor:pointer;}
+.rec-overlay{position:absolute;bottom:0;left:0;right:0;padding:6px 8px;display:flex;justify-content:flex-end;align-items:flex-end;gap:6px;}
+.rec-chip{font-size:10px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:9999px;padding:2px 8px;flex-shrink:0;}
+.rec-memo{font-size:10px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.3);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:6px;padding:2px 8px;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%;}
+@media(hover:hover){.rec-overlay{opacity:0;transition:opacity .2s;}.rec-card:hover .rec-overlay{opacity:1;}}
+@media(hover:none){.rec-chip{font-size:9px;padding:1px 6px;}.rec-memo{display:none;}}
 `;
 
 function Logo() {
@@ -330,7 +338,7 @@ export default function Page() {
               <p className="t-sub" style={{marginTop:8,fontSize:14}}>슬랙에서 <b>/시도</b> 또는 <b>/달성</b>으로 첫 인증을 남겨보세요.</p>
             </div>
           ):(
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:16}}>
+            <div className="feed-grid">
               {shown.map(r=>(
                 <RecordCard key={r.id} rec={r} member={memberOf(r.member_id)} showName={true} isMine={me===r.member_id}
                   onOpen={()=>setViewRec(r)}
@@ -380,22 +388,13 @@ export default function Page() {
 }
 
 function RecordCard({rec,member,showName,isMine,onDelete,onOpen}) {
-  const fname=`PLC_${member?.name||"member"}_${rec.num}_${rec.date}.jpg`;
-  const isTry=recType(rec)==="try";
+  const memoShort=rec.memo?(rec.memo.length>15?rec.memo.slice(0,15)+"…":rec.memo):"";
   return (
-    <div className="card" style={{borderRadius:16,overflow:"hidden",position:"relative"}}>
-      <div style={{position:"relative",cursor:"pointer"}} onClick={onOpen}>
-        <img src={rec.image_url} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"cover",display:"block"}}/>
-        {isTry&&<span style={{position:"absolute",top:8,left:8,fontSize:10,fontWeight:800,background:"rgba(255,255,255,.9)",color:"#c68a12",border:"1px solid #f0d9a8",borderRadius:9999,padding:"2px 8px"}}>시도</span>}
-      </div>
-      <div style={{padding:"8px 10px"}}>
-        {rec.memo&&<Memo text={rec.memo}/>}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:rec.memo?4:0}}>
-          <span style={{fontSize:10.5,color:"#a08f7d",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-            {showName&&member?`${member.name} · `:""}#{rec.num} · {rec.date}
-          </span>
-          <button onClick={onDelete} className="x-btn" title="삭제" style={{fontSize:11,padding:"0 2px",flexShrink:0}}>✕</button>
-        </div>
+    <div className="rec-card" onClick={onOpen}>
+      <img src={rec.image_url} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"cover",display:"block"}}/>
+      <div className="rec-overlay">
+        {memoShort&&<span className="rec-memo">{memoShort}</span>}
+        {showName&&member&&<span className="rec-chip">{member.name}</span>}
       </div>
     </div>
   );
