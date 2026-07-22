@@ -91,12 +91,20 @@ const CSS = `
 @media(max-width:640px){.board-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:420px){.board-grid{grid-template-columns:repeat(2,1fr);}}
 @keyframes plc-drop{0%{opacity:0;transform:translateY(-22px) scale(1.06) rotate(var(--tilt,0deg));}60%{opacity:1;transform:translateY(3px) scale(.98) rotate(var(--tilt,0deg));}100%{opacity:1;transform:translateY(0) scale(1) rotate(var(--tilt,0deg));}}
-@keyframes plc-stamp{0%{opacity:0;transform:scale(1.7) rotate(calc(var(--tilt,0deg) - 6deg));}55%{opacity:1;transform:scale(.93) rotate(var(--tilt,0deg));}78%{transform:scale(1.04) rotate(var(--tilt,0deg));}100%{opacity:1;transform:scale(1) rotate(var(--tilt,0deg));}}
+@keyframes plc-env-land{0%{opacity:0;transform:translateY(-30px) scale(1.08) rotate(var(--tilt,0deg));}50%{opacity:1;transform:translateY(4px) scale(.97) rotate(var(--tilt,0deg));}70%{transform:translateY(-2px) scale(1.01) rotate(var(--tilt,0deg));}100%{opacity:1;transform:translateY(0) scale(1) rotate(var(--tilt,0deg));}}
+@keyframes plc-flap{0%{transform:perspective(200px) rotateX(0deg);opacity:1;}45%{opacity:.5;}100%{transform:perspective(200px) rotateX(-175deg);opacity:0;}}
+@keyframes plc-img-pop{0%{opacity:0;transform:translateY(10px) scale(.88);}65%{opacity:1;transform:translateY(-3px) scale(1.04);}100%{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes plc-seal-drop{0%{opacity:0;transform:scale(2.8) rotate(-20deg);}55%{opacity:1;transform:scale(.85) rotate(5deg);}75%{transform:scale(1.1) rotate(-2deg);}100%{opacity:1;transform:scale(1) rotate(0deg);}}
+@keyframes plc-confetti{0%{opacity:0;transform:translate(0,0) rotate(0deg) scale(0);}10%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);}65%{opacity:.8;}100%{opacity:0;transform:translate(var(--cx),var(--cy)) rotate(var(--cr)) scale(.2);}}
 @keyframes plc-fade{from{opacity:0;}to{opacity:1;}}
 .journey-card{animation:plc-drop .5s cubic-bezier(.22,.9,.32,1.15) both;}
-.journey-final{animation:plc-stamp .65s cubic-bezier(.25,.9,.3,1.2) both;}
+.journey-final{animation:plc-env-land .6s cubic-bezier(.22,.9,.32,1.15) both;overflow:visible !important;}
+.journey-flap{animation:plc-flap .7s cubic-bezier(.4,.1,.2,1) both;transform-origin:50% 0%;}
+.journey-img-pop{animation:plc-img-pop .5s cubic-bezier(.22,.9,.32,1.15) both;}
+.journey-seal-pop{animation:plc-seal-drop .5s cubic-bezier(.25,.9,.3,1.2) both;}
+.journey-confetti{animation:plc-confetti 1.1s cubic-bezier(.15,.6,.3,1) both;pointer-events:none;}
 .journey-arrow{animation:plc-fade .35s ease both;}
-@media(prefers-reduced-motion:reduce){.journey-card,.journey-final,.journey-arrow{animation:none;}}
+@media(prefers-reduced-motion:reduce){.journey-card,.journey-final,.journey-arrow,.journey-flap,.journey-img-pop,.journey-seal-pop{animation:none;}.journey-confetti{display:none;}}
 `;
 
 function Logo() {
@@ -613,6 +621,8 @@ async function downloadBoardPng(boardEl,filename){
   setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 
+const CONFETTI_PIECES=Array.from({length:24},(_,i)=>{const a=(i/24)*Math.PI*2;const d=35+(i%5)*12;return{cx:Math.cos(a)*d,cy:Math.sin(a)*d*0.8-20,cr:(i%2===0?1:-1)*(180+i*47),color:['#F59A23','#D9A441','#E8B4C8','#A8D8EA','#fff','#F5D76E'][i%6],w:i%3===0?5:3+i%3,h:i%3===0?5:5+i%4,br:i%3===0?'50%':'1px',d:i*0.02};});
+
 /* ================= 여정 포스터 (가로 스네이크 맵) ================= */
 function JourneyPoster({member,item,records,onClose,onOpenRec}){
   const recs=records.slice().sort(recSortAsc);
@@ -676,15 +686,23 @@ function JourneyPoster({member,item,records,onClose,onOpenRec}){
                         "--tilt":`${tilt}deg`,transform:"rotate(var(--tilt))",
                         animationDelay:`${idx*STAG+(isFinal?0.35:0)}s`}}>
                         {isFinal?(<>
-                          <span style={{position:"absolute",top:0,left:0,right:0,height:20,overflow:"hidden",zIndex:1}}>
-                            <span style={{position:"absolute",left:"-6%",right:"-6%",top:-26,height:44,background:"#544236",clipPath:"polygon(0 0,100% 0,50% 100%)"}}/>
-                          </span>
-                          <span style={{position:"absolute",right:-11,top:-11,zIndex:5,filter:"drop-shadow(0 2px 5px rgba(0,0,0,.3))"}}><Seal size={44}/></span>
+                          <span className="journey-flap" style={{position:"absolute",top:-1,left:"-6%",right:"-6%",height:22,
+                            background:"#544236",clipPath:"polygon(0 0,100% 0,50% 100%)",zIndex:6,
+                            animationDelay:`${idx*STAG+0.8}s`}}/>
+                          <span className="journey-seal-pop" style={{position:"absolute",right:-11,top:-11,zIndex:7,
+                            filter:"drop-shadow(0 2px 5px rgba(0,0,0,.3))",animationDelay:`${idx*STAG+1.1}s`}}><Seal size={44}/></span>
+                          {CONFETTI_PIECES.map((c,ci)=>(
+                            <span key={ci} className="journey-confetti" style={{position:"absolute",left:"50%",top:"30%",zIndex:8,
+                              width:c.w,height:c.h,borderRadius:c.br,background:c.color,
+                              "--cx":`${c.cx}px`,"--cy":`${c.cy}px`,"--cr":`${c.cr}deg`,
+                              animationDelay:`${idx*STAG+0.9+c.d}s`}}/>
+                          ))}
                         </>):(
                           <span style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%) rotate(-1deg)",width:46,height:15,background:tapeColors[idx%3],zIndex:2}}/>
                         )}
-                        <img src={r.image_url} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"cover",borderRadius:2,display:"block",
-                          border:isFinal?"2px solid #D9A441":"none"}}/>
+                        <img className={isFinal?"journey-img-pop":""} src={r.image_url} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"cover",borderRadius:2,display:"block",
+                          border:isFinal?"2px solid #D9A441":"none",position:"relative",zIndex:2,
+                          ...(isFinal?{animationDelay:`${idx*STAG+0.95}s`}:{})}}/>
                         <span style={{display:"block",fontSize:9.5,color:isFinal?"#f0e6d8":"#5b4d43",marginTop:5,lineHeight:1.35,
                           whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.memo||" "}</span>
                         <span style={{display:"flex",justifyContent:"space-between",fontSize:8.5,color:isFinal?"#c9b8a4":"#a08f7d",marginTop:2}}>
