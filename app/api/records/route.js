@@ -20,6 +20,27 @@ export async function GET() {
 export async function POST(req) {
   const db = supabaseAdmin();
   const body = await req.json();
+
+  // 복구 요청: 이미 합성·업로드된 이미지 URL을 그대로 되살림
+  if (body.restore) {
+    const r = body.restore;
+    const { data, error } = await db
+      .from("records")
+      .insert({
+        member_id: r.member_id,
+        num: r.num,
+        memo: r.memo || "",
+        image_url: r.image_url,
+        date: r.date,
+        time: r.time || null,
+        source: r.source || "web",
+      })
+      .select()
+      .single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data);
+  }
+
   const { memberId, num, memo = "", date, time = null, imageBase64, preComposed = false } = body;
   if (!memberId || !num || !date || !imageBase64) {
     return NextResponse.json({ error: "필수 항목 누락" }, { status: 400 });
@@ -73,7 +94,10 @@ export async function POST(req) {
   return NextResponse.json(data);
 }
 
-// DELETE /api/records?id=xxx&memberId=yyy — 본인 것만 삭제
+// 운영자 이름 (이 멤버들은 모든 기록을 삭제할 수 있어요)
+const ADMINS = ["버터", "클로이"];
+
+// DELETE /api/records?id=xxx&memberId=yyy — 본인 것 또는 운영자
 export async function DELETE(req) {
   const db = supabaseAdmin();
   const { searchParams } = new URL(req.url);
@@ -82,15 +106,27 @@ export async function DELETE(req) {
   if (!id || !memberId)
     return NextResponse.json({ error: "id/memberId 필요" }, { status: 400 });
 
-  // 소유자 확인 (본인 것만)
   const { data: rec } = await db
     .from("records")
     .select("member_id")
     .eq("id", id)
     .maybeSingle();
   if (!rec) return NextResponse.json({ error: "없는 기록" }, { status: 404 });
-  if (rec.member_id !== memberId)
-    return NextResponse.json({ error: "본인 기록만 삭제할 수 있어요" }, { status: 403 });
+
+  if (rec.member_id !== memberId) {
+    // 본인 것이 아니면 운영자인지 확인
+    const { data: requester } = await db
+      .from("members")
+      .select("name")
+      .eq("id", memberId)
+      .maybeSingle();
+    const isAdmin = requester && ADMINS.includes((requester.name || "").trim());
+    if (!isAdmin)
+      return NextResponse.json(
+        { error: "본인 기록만 삭제할 수 있어요 (운영자는 전체 삭제 가능)" },
+        { status: 403 }
+      );
+  }
 
   const { error } = await db.from("records").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
