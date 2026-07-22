@@ -34,6 +34,7 @@ export async function POST(req) {
         date: r.date,
         time: r.time || null,
         source: r.source || "web",
+        type: r.type || "done",
       })
       .select()
       .single();
@@ -41,7 +42,7 @@ export async function POST(req) {
     return NextResponse.json(data);
   }
 
-  const { memberId, num, memo = "", date, time = null, imageBase64, preComposed = false } = body;
+  const { memberId, num, memo = "", date, time = null, imageBase64, preComposed = false, type = "done" } = body;
   if (!memberId || !num || !date || !imageBase64) {
     return NextResponse.json({ error: "필수 항목 누락" }, { status: 400 });
   }
@@ -86,7 +87,8 @@ export async function POST(req) {
       image_url: pub.publicUrl,
       date,
       time,
-      source: "web",
+      source: body.source === "slack" ? "slack" : "web",
+      type: type === "try" ? "try" : "done",
     })
     .select()
     .single();

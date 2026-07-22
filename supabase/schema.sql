@@ -32,8 +32,12 @@ create table if not exists records (
   date        date not null,
   time        text,                 -- 'HH:MM' 문자열 (선택)
   source      text default 'web',   -- 'web' | 'slack'
+  type        text default 'done',  -- 'try'(시도) | 'done'(달성)
   created_at  timestamptz default now()
 );
+
+-- 기존 테이블에 type 컬럼 추가 (마이그레이션)
+alter table records add column if not exists type text default 'done';
 
 create index if not exists idx_records_member on records(member_id);
 create index if not exists idx_records_created on records(created_at desc);
