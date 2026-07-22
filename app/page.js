@@ -592,12 +592,12 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
                   <span key={r.id} style={{position:"absolute",inset:0,background:"#fff",border:"1px solid #eee4d4",borderRadius:4,
                     padding:"5px 5px 0",boxShadow:"0 2px 6px rgba(69,55,48,.10)",
                     transform:i===0?"rotate(-5deg) translateY(-3px)":"rotate(4deg) translateY(-1px)"}}>
-                    <img src={r.image_url} alt="" style={{width:"100%",height:"78%",objectFit:"cover",borderRadius:2,display:"block"}}/>
+                    <img src={r.image_url} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"contain",borderRadius:2,display:"block"}}/>
                   </span>
                 ))}
                 <span style={{position:"absolute",inset:0,background:"#fff",border:"1px solid #eee4d4",borderRadius:4,
                   padding:"5px 5px 0",boxShadow:"0 2px 6px rgba(69,55,48,.10)"}}>
-                  <img src={latest.image_url} alt="" style={{width:"100%",height:"78%",objectFit:"cover",borderRadius:2,display:"block"}}/>
+                  <img src={latest.image_url} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"contain",borderRadius:2,display:"block"}}/>
                 </span>
                 {isDone&&<span style={{position:"absolute",right:-7,bottom:-7,zIndex:5,filter:"drop-shadow(0 2px 4px rgba(0,0,0,.25))"}}><Seal size={44}/></span>}
               </span>
