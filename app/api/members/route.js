@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabase";
+import { assertInternalSecret } from "../../../lib/authGate";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,8 @@ export async function GET() {
 
 // POST /api/members  body: { name }
 export async function POST(req) {
+  const gate = assertInternalSecret(req);
+  if (gate) return gate;
   const db = supabaseAdmin();
   const { name } = await req.json();
   if (!name?.trim())
@@ -58,6 +61,8 @@ export async function POST(req) {
 
 // PATCH /api/members  body: { id, name }
 export async function PATCH(req) {
+  const gate = assertInternalSecret(req);
+  if (gate) return gate;
   const db = supabaseAdmin();
   const { id, name } = await req.json();
   if (!id || !name?.trim())
@@ -74,6 +79,8 @@ export async function PATCH(req) {
 
 // DELETE /api/members?id=xxx
 export async function DELETE(req) {
+  const gate = assertInternalSecret(req);
+  if (gate) return gate;
   const db = supabaseAdmin();
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");

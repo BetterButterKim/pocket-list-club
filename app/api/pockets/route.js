@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabase";
+import { assertInternalSecret } from "../../../lib/authGate";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,8 @@ export async function GET() {
 
 // PATCH /api/pockets  body: { memberId, num, title, description }
 export async function PATCH(req) {
+  const gate = assertInternalSecret(req);
+  if (gate) return gate;
   const db = supabaseAdmin();
   const { memberId, num, title = "", description = "" } = await req.json();
   if (!memberId || !num)

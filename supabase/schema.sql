@@ -6,10 +6,21 @@
 -- 1) 멤버 -----------------------------------------------------
 create table if not exists members (
   id          uuid primary key default gen_random_uuid(),
-  name        text not null,
-  slack_user_id text unique,        -- 슬랙 사용자 ID (자동 연동용, 없어도 됨)
+  name        text not null unique,   -- 동명이인 방지
+  slack_user_id text unique,          -- 슬랙 사용자 ID (자동 연동용, 없어도 됨)
   created_at  timestamptz default now()
 );
+
+-- 기존 테이블에 name unique 제약 추가 (마이그레이션)
+-- 이미 중복 이름이 있으면 실패 → 먼저 중복을 정리해야 함
+do $$ begin
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'members_name_key' and conrelid = 'members'::regclass
+  ) then
+    alter table members add constraint members_name_key unique (name);
+  end if;
+end $$;
 
 -- 2) 포켓리스트 항목 (멤버별 1~10) -----------------------------
 create table if not exists pockets (

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabase";
 import { composeImageBuffer } from "../../../lib/compose";
+import { assertInternalSecret } from "../../../lib/authGate";
 
 export const runtime = "nodejs";
 
@@ -15,13 +16,14 @@ export async function GET() {
   return NextResponse.json(data);
 }
 
-// POST /api/records — 웹앱에서 인증 추가
-// body: { memberId, num, memo, date, time, imageBase64 }
+// POST /api/records — 인증 추가(슬랙봇 전용) 또는 복구(브라우저 undo)
+// body: { memberId, num, memo, date, time, imageBase64 } | { restore: <record> }
 export async function POST(req) {
   const db = supabaseAdmin();
   const body = await req.json();
 
   // 복구 요청: 이미 합성·업로드된 이미지 URL을 그대로 되살림
+  // (브라우저 undo 흐름 — 이미 이 워크스페이스에서 만들어진 record만 재삽입되므로 게이트 없음)
   if (body.restore) {
     const r = body.restore;
     const { data, error } = await db
@@ -41,6 +43,10 @@ export async function POST(req) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
   }
+
+  // 신규 인증 등록은 슬랙봇 전용 경로 — shared secret 필수
+  const gate = assertInternalSecret(req);
+  if (gate) return gate;
 
   const { memberId, num, memo = "", date, time = null, imageBase64, preComposed = false, type = "done" } = body;
   if (!memberId || !num || !date || !imageBase64) {
