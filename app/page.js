@@ -15,6 +15,8 @@ const api = {
   records: () => fetch("/api/records").then((r) => r.json()),
   addRecord: (payload) =>
     fetch("/api/records", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then((r) => r.json()),
+  restoreRecord: (rec) =>
+    fetch("/api/records", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restore: rec }) }).then((r) => r.json()),
   deleteRecord: (id, memberId) =>
     fetch(`/api/records?id=${id}&memberId=${memberId}`, { method: "DELETE" }).then((r) => r.json()),
 };
@@ -221,6 +223,8 @@ export default function Page() {
   const [confirmBox,setConfirmBox]=useState(null);
   const [viewRec,setViewRec]=useState(null);
   const [me,setMeState]=useState("");
+  const [undoRec,setUndoRec]=useState(null); // 방금 삭제한 기록 (되돌리기용)
+  const undoTimer=useRef(null);
 
   const say=(m)=>{setToast(m);setTimeout(()=>setToast(""),2500);};
   const askConfirm=(msg,action)=>setConfirmBox({msg,action});
@@ -271,14 +275,39 @@ export default function Page() {
     else say("저장 중 문제가 생겼어요.");
     reload();
   };
-  const doDeleteRecord=async(id,memberId)=>{
-    // 본인 확인용 ID가 없으면(다른 기기/첫 방문) 해당 기록의 주인으로 등록
-    const myId = me || memberId;
+  const doDeleteRecord=async(rec)=>{
+    const myId = me || rec.member_id;
     if(!me){ setMe(myId); setMeState(myId); }
-    const res = await api.deleteRecord(id, myId);
-    if(res?.ok){ say("삭제했어요."); reload(); }
-    else say(res?.error || "삭제하지 못했어요.");
+    const res = await api.deleteRecord(rec.id, myId);
+    if(res?.ok){
+      // 되돌리기용으로 잠시 보관 (20초)
+      setUndoRec(rec);
+      if(undoTimer.current) clearTimeout(undoTimer.current);
+      undoTimer.current=setTimeout(()=>setUndoRec(null),20000);
+      reload();
+    } else say(res?.error || "삭제하지 못했어요.");
   };
+
+  const undoDelete=useCallback(async()=>{
+    if(!undoRec) return;
+    const rec=undoRec;
+    setUndoRec(null);
+    if(undoTimer.current) clearTimeout(undoTimer.current);
+    const r=await api.restoreRecord(rec);
+    say(r?.id ? "복구했어요! ↩" : "복구하지 못했어요.");
+    reload();
+  },[undoRec,reload]);
+
+  // Cmd/Ctrl + Z 로 되돌리기
+  useEffect(()=>{
+    const onKey=(e)=>{
+      if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="z"&&undoRec){
+        e.preventDefault(); undoDelete();
+      }
+    };
+    window.addEventListener("keydown",onKey);
+    return ()=>window.removeEventListener("keydown",onKey);
+  },[undoRec,undoDelete]);
 
   const memberOf=(id)=>members.find(m=>m.id===id);
   const shown=records.filter(r=>(view==="all"||r.member_id===view)&&(selNum==null||r.num===selNum));
@@ -398,7 +427,7 @@ export default function Page() {
             {shown.map(r=>(
               <RecordCard key={r.id} rec={r} member={memberOf(r.member_id)} showName={view==="all"} isMine={me===r.member_id}
                 onOpen={()=>setViewRec(r)}
-                onDelete={()=>askConfirm("이 인증 기록을 삭제할까요?",()=>doDeleteRecord(r.id,r.member_id))}/>
+                onDelete={()=>askConfirm("이 인증 기록을 삭제할까요?\n삭제 후 20초 안에는 되돌릴 수 있어요.",()=>doDeleteRecord(r))}/>
             ))}
           </div>
         )}
@@ -413,7 +442,22 @@ export default function Page() {
 
       {confirmBox&&<ConfirmDialog msg={confirmBox.msg} onNo={()=>setConfirmBox(null)} onYes={()=>{const a=confirmBox.action;setConfirmBox(null);a();}}/>}
 
-      {toast&&<div className="toast-bar" style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",borderRadius:9999,padding:"10px 20px",fontSize:14,zIndex:50}}>{toast}</div>}
+      {undoRec ? (
+        <div className="toast-bar" style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",
+          borderRadius:9999,padding:"10px 12px 10px 20px",fontSize:14,zIndex:50,
+          display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 16px rgba(0,0,0,0.2)"}}>
+          <span>인증을 삭제했어요.</span>
+          <button onClick={undoDelete}
+            style={{background:"#F59A23",color:"#fff",border:"none",cursor:"pointer",
+              borderRadius:9999,padding:"6px 14px",fontSize:13,fontWeight:900}}>
+            되돌리기 ↩
+          </button>
+          <button onClick={()=>setUndoRec(null)} className="bare-input"
+            style={{color:"#FAF6EF",opacity:0.7,fontSize:16,cursor:"pointer",padding:"0 4px"}}>✕</button>
+        </div>
+      ) : toast ? (
+        <div className="toast-bar" style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",borderRadius:9999,padding:"10px 20px",fontSize:14,zIndex:50}}>{toast}</div>
+      ) : null}
     </div>
   );
 }
