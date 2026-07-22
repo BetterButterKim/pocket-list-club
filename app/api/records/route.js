@@ -99,6 +99,62 @@ export async function POST(req) {
 // 운영자 이름 (이 멤버들은 모든 기록을 삭제할 수 있어요)
 const ADMINS = ["버터", "클로이"];
 
+async function canTouchRecord(db, id, memberId) {
+  const { data: rec } = await db
+    .from("records")
+    .select("member_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (!rec) return { ok: false, status: 404, error: "없는 기록" };
+  if (rec.member_id !== memberId) {
+    const { data: requester } = await db
+      .from("members")
+      .select("name")
+      .eq("id", memberId)
+      .maybeSingle();
+    const isAdmin = requester && ADMINS.includes((requester.name || "").trim());
+    if (!isAdmin)
+      return {
+        ok: false,
+        status: 403,
+        error: "본인 기록만 수정/삭제할 수 있어요 (운영자는 전체 가능)",
+      };
+  }
+  return { ok: true };
+}
+
+// PATCH /api/records — 기록 수정 (메모·날짜·시간·넘버·타입)
+// body: { id, memberId, memo?, date?, time?, num?, type? }
+export async function PATCH(req) {
+  const db = supabaseAdmin();
+  const body = await req.json();
+  const { id, memberId } = body;
+  if (!id || !memberId)
+    return NextResponse.json({ error: "id/memberId 필요" }, { status: 400 });
+
+  const perm = await canTouchRecord(db, id, memberId);
+  if (!perm.ok)
+    return NextResponse.json({ error: perm.error }, { status: perm.status });
+
+  const patch = {};
+  if ("memo" in body) patch.memo = body.memo || "";
+  if ("date" in body && body.date) patch.date = body.date;
+  if ("time" in body) patch.time = body.time || null;
+  if ("num" in body && body.num >= 1 && body.num <= 10) patch.num = body.num;
+  if ("type" in body) patch.type = body.type === "try" ? "try" : "done";
+  if (Object.keys(patch).length === 0)
+    return NextResponse.json({ error: "수정할 내용이 없어요" }, { status: 400 });
+
+  const { data, error } = await db
+    .from("records")
+    .update(patch)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
+
 // DELETE /api/records?id=xxx&memberId=yyy — 본인 것 또는 운영자
 export async function DELETE(req) {
   const db = supabaseAdmin();
