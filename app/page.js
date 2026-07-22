@@ -263,7 +263,7 @@ export default function Page() {
         <div style={{display:"flex",flexWrap:"wrap",alignItems:"flex-end",justifyContent:"space-between",gap:16}}>
           <div>
             <Logo/>
-            <p className="t-sub" style={{marginTop:12,fontSize:14}}>100일 · 10명 · 각자 10개의 포켓리스트 — 슬랙 <b>/시도</b>, <b>/달성</b>으로 인증을 남겨요.</p>
+            <p className="t-sub" style={{marginTop:12,fontSize:14}}>포켓메이트들의 시도 및 달성 기록</p>
           </div>
         </div>
 
