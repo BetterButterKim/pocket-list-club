@@ -17,11 +17,17 @@ const api = {
 };
 
 /* ================= 이미지 유틸 ================= */
+// 모바일(터치 기기)에서만 공유 시트 사용 — 데스크톱 웹은 항상 바로 다운로드
+function isMobileDevice() {
+  if (typeof navigator === "undefined") return false;
+  if (navigator.userAgentData) return !!navigator.userAgentData.mobile;
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
 async function saveImage(url, filename) {
   try {
     const blob = await fetch(url).then((r) => r.blob());
     const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (isMobileDevice() && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file] });
       return;
     }
@@ -597,7 +603,7 @@ async function downloadBoardPng(boardEl,filename){
     canvas.toBlob((b)=>b?resolve(b):reject(new Error("이미지 변환에 실패했어요")),"image/png");
   });
   const file=new File([blob],filename,{type:"image/png"});
-  if(navigator.canShare&&navigator.canShare({files:[file]})){
+  if(isMobileDevice()&&navigator.canShare&&navigator.canShare({files:[file]})){
     try{ await navigator.share({files:[file]}); return; }
     catch(e){ if(e && e.name==="AbortError") return; }
   }
