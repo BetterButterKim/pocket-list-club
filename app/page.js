@@ -143,6 +143,7 @@ export default function Page() {
   const undoTimer=useRef(null);
   const [journeyNum,setJourneyNum]=useState(null);
   const [editRec,setEditRec]=useState(null);
+  const [boardSaving,setBoardSaving]=useState(false);
   const boardRef=useRef(null);
 
   const say=(m)=>{setToast(m);setTimeout(()=>setToast(""),2500);};
@@ -286,9 +287,19 @@ export default function Page() {
             <PocketBoard member={curMember} list={curPockets} records={records.filter(r=>r.member_id===view)}
               onOpen={(n)=>setJourneyNum(n)} boardRef={boardRef}/>
             <div style={{marginTop:12,display:"flex",justifyContent:"center"}}>
-              <button onClick={()=>{if(boardRef.current)downloadBoardPng(boardRef.current,`PLC_${curMember.name}_board.png`).catch(()=>{});}}
-                className="btn-ghost" style={{borderRadius:9999,padding:"8px 20px",fontSize:13,fontWeight:700}}>
-                📥 보드 이미지 저장
+              <button disabled={boardSaving} onClick={async()=>{
+                  if(!boardRef.current||boardSaving)return;
+                  setBoardSaving(true);
+                  try{
+                    await downloadBoardPng(boardRef.current,`PLC_${curMember.name}_board.png`);
+                    say("보드 이미지를 저장했어요! 📥");
+                  }catch(e){
+                    console.error(e);
+                    say("이미지 저장에 실패했어요. 다시 시도해 주세요.");
+                  }finally{ setBoardSaving(false); }
+                }}
+                className="btn-ghost" style={{borderRadius:9999,padding:"8px 20px",fontSize:13,fontWeight:700,opacity:boardSaving?0.6:1}}>
+                {boardSaving?"저장 중…":"📥 보드 이미지 저장"}
               </button>
             </div>
           </div>
@@ -573,53 +584,27 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
   );
 }
 
-/* 보드 → PNG 저장 (이미지를 data URL로 인라인 후 SVG foreignObject → canvas) */
+/* 보드 → PNG 저장 (html2canvas로 DOM을 그대로 캡쳐) */
 async function downloadBoardPng(boardEl,filename){
-  const imgs=[...boardEl.querySelectorAll("img")];
-  const origSrcs=imgs.map(im=>im.src);
-  await Promise.all(imgs.map(async(im)=>{
-    try{
-      const res=await fetch(im.src);
-      const blob=await res.blob();
-      const durl=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(blob);});
-      im.src=durl;
-    }catch{}
-  }));
-  const w=boardEl.offsetWidth,h=boardEl.offsetHeight;
-  const gridCols=getComputedStyle(boardEl.querySelector(".board-grid")).gridTemplateColumns;
-  const grid=boardEl.querySelector(".board-grid");
-  const origGridStyle=grid?.style.gridTemplateColumns||"";
-  if(grid)grid.style.gridTemplateColumns=gridCols;
-  const xhtml=new XMLSerializer().serializeToString(boardEl);
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${CSS} .board-grid{grid-template-columns:${gridCols};} .slab{font-family:Georgia,serif;font-weight:900;} *{box-sizing:border-box;font-family:"Apple SD Gothic Neo","Noto Sans KR",sans-serif;}</style>${xhtml}</div></foreignObject></svg>`;
-  if(grid)grid.style.gridTemplateColumns=origGridStyle;
-  imgs.forEach((im,i)=>{im.src=origSrcs[i];});
-  const blob=new Blob([svg],{type:"image/svg+xml;charset=utf-8"});
+  const html2canvas=(await import("html2canvas")).default;
+  const canvas=await html2canvas(boardEl,{
+    backgroundColor:"#fffdf8",
+    scale:2,
+    useCORS:true,
+    imageTimeout:15000,
+  });
+  const blob=await new Promise((resolve,reject)=>{
+    canvas.toBlob((b)=>b?resolve(b):reject(new Error("이미지 변환에 실패했어요")),"image/png");
+  });
+  const file=new File([blob],filename,{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file]}); return; }
+    catch(e){ if(e && e.name==="AbortError") return; }
+  }
   const url=URL.createObjectURL(blob);
-  try{
-    await new Promise((resolve,reject)=>{
-      const img=new Image();
-      img.onload=()=>{
-        try{
-          const c=document.createElement("canvas");c.width=w*2;c.height=h*2;
-          const ctx=c.getContext("2d");ctx.scale(2,2);ctx.drawImage(img,0,0);
-          c.toBlob((b)=>{
-            if(!b){reject(new Error("toBlob failed"));return;}
-            const file=new File([b],filename,{type:"image/png"});
-            if(navigator.canShare&&navigator.canShare({files:[file]})){
-              navigator.share({files:[file]}).then(resolve).catch(resolve);
-            }else{
-              const a=document.createElement("a");a.download=filename;a.href=URL.createObjectURL(b);a.click();
-              setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-              resolve();
-            }
-          },"image/png");
-        }catch(e){reject(e);}
-      };
-      img.onerror=()=>reject(new Error("svg render fail"));
-      img.src=url;
-    });
-  }finally{URL.revokeObjectURL(url);}
+  const a=document.createElement("a");
+  a.download=filename; a.href=url; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 
 /* ================= 여정 포스터 (가로 스네이크 맵) ================= */
