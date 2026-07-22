@@ -468,20 +468,20 @@ function PocketEditor({item,onSave}) {
 
 function RecordCard({rec,member,showName,isMine,onDelete,onOpen}) {
   const fname=`PLC_${member?.name||"member"}_${rec.num}_${rec.date}.jpg`;
+  const isTry=recType(rec)==="try";
   return (
-    <div className="card" style={{borderRadius:16,overflow:"hidden"}}>
-      <img src={rec.image_url} alt="" onClick={onOpen} style={{width:"100%",aspectRatio:"1/1",objectFit:"cover",display:"block",cursor:"pointer"}}/>
-      <div style={{padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
-        <Memo text={rec.memo}/>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:11,color:"#a08f7d"}}>
-          <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}>
-            {recType(rec)==="try"&&<span style={{fontSize:9,fontWeight:800,background:"#fdf3e3",color:"#c68a12",border:"1px solid #f0d9a8",borderRadius:9999,padding:"1px 6px",flexShrink:0}}>시도</span>}
-            {showName&&member?`${member.name} · `:""}#{rec.num} · {rec.date}{rec.time?` ${rec.time}`:""}{rec.source==="slack"?" · 슬랙":""}
+    <div className="card" style={{borderRadius:16,overflow:"hidden",position:"relative"}}>
+      <div style={{position:"relative",cursor:"pointer"}} onClick={onOpen}>
+        <img src={rec.image_url} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"cover",display:"block"}}/>
+        {isTry&&<span style={{position:"absolute",top:8,left:8,fontSize:10,fontWeight:800,background:"rgba(255,255,255,.9)",color:"#c68a12",border:"1px solid #f0d9a8",borderRadius:9999,padding:"2px 8px"}}>시도</span>}
+      </div>
+      <div style={{padding:"8px 10px"}}>
+        {rec.memo&&<Memo text={rec.memo}/>}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:rec.memo?4:0}}>
+          <span style={{fontSize:10.5,color:"#a08f7d",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            {showName&&member?`${member.name} · `:""}#{rec.num} · {rec.date}
           </span>
-          <span style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-            <button onClick={()=>saveImage(rec.image_url,fname)} className="bare-input t-orange" style={{fontWeight:700,fontSize:11,cursor:"pointer",padding:0}}>저장</button>
-            <button onClick={onDelete} className="x-btn" title="삭제" style={{fontSize:12}}>✕</button>
-          </span>
+          <button onClick={onDelete} className="x-btn" title="삭제" style={{fontSize:11,padding:"0 2px",flexShrink:0}}>✕</button>
         </div>
       </div>
     </div>
@@ -621,40 +621,53 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
   );
 }
 
-/* 보드 → PNG 저장 (이미지 dataURL 인라인 후 SVG foreignObject 캡쳐) */
+/* 보드 → PNG 저장 (이미지를 data URL로 인라인 후 SVG foreignObject → canvas) */
 async function downloadBoardPng(boardEl,filename){
-  const clone=boardEl.cloneNode(true);
-  const srcImgs=[...boardEl.querySelectorAll("img")];
-  const cloneImgs=[...clone.querySelectorAll("img")];
-  await Promise.all(cloneImgs.map(async(im,i)=>{
+  const imgs=[...boardEl.querySelectorAll("img")];
+  const origSrcs=imgs.map(im=>im.src);
+  await Promise.all(imgs.map(async(im)=>{
     try{
-      const blob=await fetch(srcImgs[i].src,{mode:"cors"}).then(r=>r.blob());
+      const res=await fetch(im.src);
+      const blob=await res.blob();
       const durl=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(blob);});
-      im.setAttribute("src",durl);
-    }catch{im.removeAttribute("src");}
+      im.src=durl;
+    }catch{}
   }));
   const w=boardEl.offsetWidth,h=boardEl.offsetHeight;
-  clone.style.width=w+"px";clone.style.height=h+"px";
   const gridCols=getComputedStyle(boardEl.querySelector(".board-grid")).gridTemplateColumns;
-  const cloneGrid=clone.querySelector(".board-grid");
-  if(cloneGrid)cloneGrid.style.gridTemplateColumns=gridCols;
-  const xhtml=new XMLSerializer().serializeToString(clone);
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${CSS} .slab{font-family:Georgia,serif;font-weight:900;} div,span,button,img{box-sizing:border-box;font-family:"Apple SD Gothic Neo","Noto Sans KR",sans-serif;}</style>${xhtml}</div></foreignObject></svg>`;
-  const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml;charset=utf-8"}));
-  await new Promise((resolve,reject)=>{
-    const img=new Image();
-    img.onload=()=>{
-      try{
-        const c=document.createElement("canvas");c.width=w*2;c.height=h*2;
-        const ctx=c.getContext("2d");ctx.scale(2,2);ctx.drawImage(img,0,0);
-        const a=document.createElement("a");a.download=filename;a.href=c.toDataURL("image/png");a.click();
-        resolve();
-      }catch(e){reject(e);}
-      finally{URL.revokeObjectURL(url);}
-    };
-    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("svg load fail"));};
-    img.src=url;
-  });
+  const grid=boardEl.querySelector(".board-grid");
+  const origGridStyle=grid?.style.gridTemplateColumns||"";
+  if(grid)grid.style.gridTemplateColumns=gridCols;
+  const xhtml=new XMLSerializer().serializeToString(boardEl);
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${CSS} .board-grid{grid-template-columns:${gridCols};} .slab{font-family:Georgia,serif;font-weight:900;} *{box-sizing:border-box;font-family:"Apple SD Gothic Neo","Noto Sans KR",sans-serif;}</style>${xhtml}</div></foreignObject></svg>`;
+  if(grid)grid.style.gridTemplateColumns=origGridStyle;
+  imgs.forEach((im,i)=>{im.src=origSrcs[i];});
+  const blob=new Blob([svg],{type:"image/svg+xml;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  try{
+    await new Promise((resolve,reject)=>{
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const c=document.createElement("canvas");c.width=w*2;c.height=h*2;
+          const ctx=c.getContext("2d");ctx.scale(2,2);ctx.drawImage(img,0,0);
+          c.toBlob((b)=>{
+            if(!b){reject(new Error("toBlob failed"));return;}
+            const file=new File([b],filename,{type:"image/png"});
+            if(navigator.canShare&&navigator.canShare({files:[file]})){
+              navigator.share({files:[file]}).then(resolve).catch(resolve);
+            }else{
+              const a=document.createElement("a");a.download=filename;a.href=URL.createObjectURL(b);a.click();
+              setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+              resolve();
+            }
+          },"image/png");
+        }catch(e){reject(e);}
+      };
+      img.onerror=()=>reject(new Error("svg render fail"));
+      img.src=url;
+    });
+  }finally{URL.revokeObjectURL(url);}
 }
 
 /* ================= 여정 포스터 (가로 스네이크 맵) ================= */
