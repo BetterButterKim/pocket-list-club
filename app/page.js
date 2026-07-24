@@ -556,17 +556,16 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
   const byNum={};
   records.slice().sort(recSortAsc).forEach(r=>{(byNum[r.num]=byNum[r.num]||[]).push(r);});
   const doneN=list.filter(it=>(byNum[it.num]||[]).some(r=>recType(r)==="done")).length;
-  const tryN=records.filter(r=>recType(r)==="try").length;
-  const enName=`${(member?.name||"").toUpperCase()}'S POCKET`;
-
+  let tryN=0;
+  list.forEach(it=>{const recs=byNum[it.num]||[];if(recs.length===0)return;const hasDone=recs.some(r=>recType(r)==="done");tryN+=hasDone?recs.length-1:recs.length;});
   return (
     <div ref={boardRef} style={{background:"#fffdf8",border:"1px solid #eadfd0",borderRadius:24,
       padding:"30px 26px 22px",position:"relative",overflow:"hidden",
       boxShadow:"0 10px 40px rgba(69,55,48,.07)"}}>
       <div style={{position:"absolute",inset:10,border:"1.5px dashed #e8dcc8",borderRadius:16,pointerEvents:"none"}}/>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:8,position:"relative",zIndex:1,padding:"0 4px"}}>
-        <div className="slab" style={{fontSize:21,letterSpacing:1}}>
-          {enName}<span style={{fontSize:12,color:"#a08f7d",fontWeight:400,letterSpacing:2,marginLeft:8,fontFamily:'"Noto Sans KR",sans-serif'}}>{member?.name}의 포켓</span>
+        <div style={{fontSize:22,letterSpacing:1,fontFamily:'"Black Han Sans",sans-serif'}}>
+          {member?.name}의 포켓
         </div>
         <div style={{fontSize:12,color:"#8a7a6d",fontWeight:700,letterSpacing:2}}>
           {day.txt.startsWith("DAY")?(<>DAY <b style={{color:"#F59A23",fontSize:16}}>{day.txt.split(" ")[1]}</b> / {day.total}</>):day.txt}
@@ -589,7 +588,7 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
                   display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,cursor:"pointer",padding:6}}>
                 <span className="slab" style={{fontSize:26,color:"#e5dac6"}}>{it.num}</span>
                 <span style={{fontSize:10,color:"#c9bba6",letterSpacing:1}}>COMING SOON</span>
-                {it.title&&<span style={{fontSize:9.5,color:"#c9bba6",lineHeight:1.3,textAlign:"center",
+                {it.title&&<span style={{fontSize:11.5,fontWeight:700,color:"#a89880",lineHeight:1.3,textAlign:"center",
                   display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{it.title}</span>}
               </button>
             );
