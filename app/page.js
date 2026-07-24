@@ -54,18 +54,18 @@ const CSS = `
 .plc,.plc *{font-family:"Noto Sans KR","Apple SD Gothic Neo",sans-serif;box-sizing:border-box;}
 .plc{min-height:100vh;background:#FAF6EF;color:#453730;}
 .slab{font-family:"Alfa Slab One",serif !important;}
-.t-sub{color:#8a7a6d;}.t-faint{color:#b6a795;}.t-orange{color:#F59A23;}.t-danger{color:#c0392b;}
+.t-sub{color:#8a7a6d;}.t-faint{color:#b6a795;}.t-orange{color:#FF7900;}.t-danger{color:#c0392b;}
 .t-11{font-size:11px;}.t-13{font-size:13px;}
 .btn-dark{background:#453730;color:#FAF6EF;border:none;cursor:pointer;transition:background .15s;}
 .btn-dark:hover{background:#5b4a3f;}
-.btn-orange{background:#F59A23;color:#fff;border:none;cursor:pointer;}
+.btn-orange{background:#FF7900;color:#fff;border:none;cursor:pointer;}
 .btn-muted{background:#f0e8da;color:#c3b4a4;border:none;cursor:default;}
 .btn-ghost{background:#fff;border:1px solid #e2d6c8;color:#8a7a6d;cursor:pointer;transition:all .15s;}
-.btn-ghost:hover{border-color:#F59A23;color:#F59A23;}
+.btn-ghost:hover{border-color:#FF7900;color:#FF7900;}
 .btn-ghost-danger{background:#fff;border:1px solid #e2d6c8;color:#8a7a6d;cursor:pointer;transition:all .15s;}
 .btn-ghost-danger:hover{border-color:#c0392b;color:#c0392b;}
 .chip{background:#fff;border:1px solid #e2d6c8;color:#5b4d43;cursor:pointer;transition:all .15s;}
-.chip:hover{border-color:#F59A23;}
+.chip:hover{border-color:#FF7900;}
 .chip-active{background:#E2D4BE;border:1px solid #b9a88f;color:#453730;}
 .chip-dashed{background:transparent;border:1px dashed #c9b8a8;color:#8a7a6d;cursor:pointer;}
 .pill{background:#F1E9DD;color:#5b4d43;border:1px solid transparent;cursor:pointer;min-width:38px;}
@@ -73,11 +73,11 @@ const CSS = `
 .pill-active{background:#E2D4BE;color:#453730;border:1px solid #b9a88f;}
 .card{background:#fff;border:1px solid #eadfd0;}
 .input{border:1px solid #e2d6c8;background:#fff;color:#453730;outline:none;}
-.input:focus{border-color:#F59A23;}
+.input:focus{border-color:#FF7900;}
 .bare-input{background:transparent;border:none;outline:none;color:#453730;}
 .soft-area{background:#FAF6EF;border:none;outline:none;color:#453730;resize:vertical;}
 .dropzone{border:2px dashed #d9cbbd;background:#fff;cursor:pointer;transition:all .15s;}
-.dropzone.drag{border-color:#F59A23;background:#fdf3e3;}
+.dropzone.drag{border-color:#FF7900;background:#fff2e6;}
 .overlay{background:rgba(0,0,0,0.4);}
 .sheet{background:#FAF6EF;}
 .toast-bar{background:#453730;color:#FAF6EF;}
@@ -85,7 +85,7 @@ const CSS = `
 .x-btn:hover{color:#c0392b;}
 .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .num-choice{text-align:left;overflow:hidden;cursor:pointer;transition:all .15s;background:#fff;border:1px solid #e2d6c8;color:#5b4d43;}
-.num-choice:hover{border-color:#F59A23;}
+.num-choice:hover{border-color:#FF7900;}
 .num-choice.on{background:#E2D4BE;border:1px solid #b9a88f;color:#453730;}
 .board-grid{grid-template-columns:repeat(5,1fr);}
 @media(max-width:640px){.board-grid{grid-template-columns:repeat(3,1fr);}}
@@ -124,8 +124,8 @@ const CSS = `
 function Logo() {
   return (
     <div style={{position:"relative",display:"inline-block"}}>
-      <span style={{position:"absolute",borderRadius:"9999px",background:"#CFE0F2",width:46,height:46,left:-16,top:-8,zIndex:0}}/>
-      <span style={{position:"absolute",borderRadius:"9999px",background:"#F9EDBB",width:56,height:56,right:-20,bottom:-12,zIndex:0}}/>
+      <span style={{position:"absolute",borderRadius:"9999px",background:"#d4e6f7",width:46,height:46,left:-16,top:-8,zIndex:0}}/>
+      <span style={{position:"absolute",borderRadius:"9999px",background:"#ffe0c2",width:56,height:56,right:-20,bottom:-12,zIndex:0}}/>
       <h1 className="slab" style={{position:"relative",zIndex:1,color:"#453730",lineHeight:1,margin:0,fontSize:34,letterSpacing:"0.5px"}}>
         100 Pocket List Club
       </h1>
@@ -412,7 +412,7 @@ export default function Page() {
           display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 16px rgba(0,0,0,0.2)"}}>
           <span>인증을 삭제했어요.</span>
           <button onClick={undoDelete}
-            style={{background:"#F59A23",color:"#fff",border:"none",cursor:"pointer",
+            style={{background:"#FF7900",color:"#fff",border:"none",cursor:"pointer",
               borderRadius:9999,padding:"6px 14px",fontSize:13,fontWeight:900}}>
             되돌리기 ↩
           </button>
@@ -543,10 +543,10 @@ const recSortAsc=(a,b)=>{
 function Seal({size=44}){
   return (
     <svg viewBox="0 0 60 60" width={size} height={size} aria-hidden="true">
-      <path d="M30 2 L35 8 L43 5 L45 13 L53 13 L52 21 L59 25 L54 32 L58 39 L50 42 L50 50 L42 49 L38 56 L30 51 L22 56 L18 49 L10 50 L10 42 L2 39 L6 32 L1 25 L8 21 L7 13 L15 13 L17 5 L25 8 Z" fill="#D9A441"/>
-      <circle cx="30" cy="29" r="16" fill="none" stroke="#a87c22" strokeWidth="1.2"/>
-      <text x="30" y="26" fontSize="8.5" fontWeight="900" fill="#5c4310" textAnchor="middle" fontFamily="Georgia,serif">DONE</text>
-      <text x="30" y="36" fontSize="6" fill="#7a5c1c" textAnchor="middle">100 PLC</text>
+      <path d="M30 2 L35 8 L43 5 L45 13 L53 13 L52 21 L59 25 L54 32 L58 39 L50 42 L50 50 L42 49 L38 56 L30 51 L22 56 L18 49 L10 50 L10 42 L2 39 L6 32 L1 25 L8 21 L7 13 L15 13 L17 5 L25 8 Z" fill="#FF7900"/>
+      <circle cx="30" cy="29" r="16" fill="none" stroke="#cc6000" strokeWidth="1.2"/>
+      <text x="30" y="26" fontSize="8.5" fontWeight="900" fill="#fff" textAnchor="middle" fontFamily="Georgia,serif">DONE</text>
+      <text x="30" y="36" fontSize="6" fill="#fff3e0" textAnchor="middle">100 PLC</text>
     </svg>
   );
 }
@@ -568,7 +568,7 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
           {member?.name}의 포켓
         </div>
         <div style={{fontSize:12,color:"#8a7a6d",fontWeight:700,letterSpacing:2}}>
-          {day.txt.startsWith("DAY")?(<>DAY <b style={{color:"#F59A23",fontSize:16}}>{day.txt.split(" ")[1]}</b> / {day.total}</>):day.txt}
+          {day.txt.startsWith("DAY")?(<>DAY <b style={{color:"#FF7900",fontSize:16}}>{day.txt.split(" ")[1]}</b> / {day.total}</>):day.txt}
         </div>
       </div>
       <div style={{display:"flex",gap:18,margin:"10px 4px 20px",position:"relative",zIndex:1}}>
@@ -616,10 +616,10 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
                 {isDone&&<span style={{position:"absolute",right:-7,bottom:-7,zIndex:5,filter:"drop-shadow(0 2px 4px rgba(0,0,0,.25))"}}><Seal size={44}/></span>}
               </span>
               <span style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
-                <span className="slab" style={{fontSize:12,color:isDone?"#D9A441":"#F59A23"}}>No.{it.num}</span>
+                <span className="slab" style={{fontSize:12,color:isDone?"#FF7900":"#FF7900"}}>No.{it.num}</span>
                 {isDone
-                  ?<span style={{fontSize:9.5,fontWeight:800,background:"#D9A441",color:"#3d2e10",borderRadius:9999,padding:"2px 8px",letterSpacing:.5}}>DONE</span>
-                  :<span style={{fontSize:9.5,fontWeight:800,background:"#fdf3e3",color:"#c68a12",border:"1px solid #f0d9a8",borderRadius:9999,padding:"2px 8px"}}>시도 ×{tries}</span>}
+                  ?<span style={{fontSize:9.5,fontWeight:800,background:"#FF7900",color:"#fff",borderRadius:9999,padding:"2px 8px",letterSpacing:.5}}>DONE</span>
+                  :<span style={{fontSize:9.5,fontWeight:800,background:"#fff2e6",color:"#e06800",border:"1px solid #ffc999",borderRadius:9999,padding:"2px 8px"}}>시도 ×{tries}</span>}
               </span>
               <span style={{display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden",
                 fontSize:10,color:isDone?"#e8dfd2":"#5b4d43",lineHeight:1.35,marginTop:5,minHeight:27}}>{it.title||"이름 미설정"}</span>
@@ -629,7 +629,7 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
       </div>
       <div style={{marginTop:22,textAlign:"center",position:"relative",zIndex:1}}>
         <div style={{fontSize:10.5,color:"#b6a795",letterSpacing:3,fontWeight:700}}>100 POCKET LIST CLUB · 2026.07.25 — 11.01</div>
-        <div style={{fontSize:11,color:"#F59A23",fontWeight:700,marginTop:3}}>#100일포켓리스트 #{member?.name}의포켓</div>
+        <div style={{fontSize:11,color:"#FF7900",fontWeight:700,marginTop:3}}>#100일포켓리스트 #{member?.name}의포켓</div>
       </div>
     </div>
   );
@@ -658,7 +658,7 @@ async function downloadBoardPng(boardEl,filename){
   setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 
-const CONFETTI_PIECES=Array.from({length:24},(_,i)=>{const a=(i/24)*Math.PI*2;const d=35+(i%5)*12;return{cx:Math.cos(a)*d,cy:Math.sin(a)*d*0.8-20,cr:(i%2===0?1:-1)*(180+i*47),color:['#F59A23','#D9A441','#E8B4C8','#A8D8EA','#fff','#F5D76E'][i%6],w:i%3===0?5:3+i%3,h:i%3===0?5:5+i%4,br:i%3===0?'50%':'1px',d:i*0.02};});
+const CONFETTI_PIECES=Array.from({length:24},(_,i)=>{const a=(i/24)*Math.PI*2;const d=35+(i%5)*12;return{cx:Math.cos(a)*d,cy:Math.sin(a)*d*0.8-20,cr:(i%2===0?1:-1)*(180+i*47),color:['#FF7900','#1560BC','#FF9F40','#A8D8EA','#fff','#FFB366'][i%6],w:i%3===0?5:3+i%3,h:i%3===0?5:5+i%4,br:i%3===0?'50%':'1px',d:i*0.02};});
 
 /* ================= 여정 포스터 (가로 스네이크 맵) ================= */
 function JourneyPoster({member,item,records,onClose,onOpenRec}){
@@ -689,21 +689,21 @@ function JourneyPoster({member,item,records,onClose,onOpenRec}){
           <div>
             <div style={{fontSize:9,letterSpacing:3,color:"#b6a795",fontWeight:700}}>100 POCKET LIST CLUB · POCKET JOURNEY</div>
             <div style={{fontSize:16,fontWeight:800,marginTop:4,lineHeight:1.3}}>
-              <span className="slab" style={{color:"#F59A23",marginRight:6}}>No.{item.num}</span>{item.title||"이름 미설정"}
+              <span className="slab" style={{color:"#FF7900",marginRight:6}}>No.{item.num}</span>{item.title||"이름 미설정"}
             </div>
           </div>
           <div style={{fontSize:11,color:"#cbbfae",display:"flex",gap:12,alignItems:"center"}}>
             <span>by <b style={{color:"#FAF6EF"}}>{member?.name}</b></span>
             <span>시도 <b style={{color:"#FAF6EF"}}>{tries.length}</b></span>
             {doneRec
-              ?<span style={{color:"#F59A23",fontWeight:800}}>✦ 달성 {doneRec.date}</span>
+              ?<span style={{color:"#FF7900",fontWeight:800}}>✦ 달성 {doneRec.date}</span>
               :<span>도전 중</span>}
           </div>
         </div>
         <div style={{padding:"24px 26px 18px"}}>
           {steps.length===0?(
             <div style={{textAlign:"center",padding:"34px 10px",color:"#b6a795",fontSize:13}}>
-              아직 기록이 없어요.<br/>슬랙에서 <b style={{color:"#c68a12"}}>/시도</b> 로 첫 폴라로이드를 붙여보세요!
+              아직 기록이 없어요.<br/>슬랙에서 <b style={{color:"#e06800"}}>/시도</b> 로 첫 폴라로이드를 붙여보세요!
             </div>
           ):rows.map((row,ri)=>{
             const rev=ri%2===1;
@@ -738,13 +738,13 @@ function JourneyPoster({member,item,records,onClose,onOpenRec}){
                           <span style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%) rotate(-1deg)",width:46,height:15,background:tapeColors[idx%3],zIndex:2}}/>
                         )}
                         <img className={isFinal?"journey-img-pop":""} src={r.image_url} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"cover",borderRadius:2,display:"block",
-                          border:isFinal?"2px solid #D9A441":"none",position:"relative",zIndex:2,
+                          border:isFinal?"2px solid #FF7900":"none",position:"relative",zIndex:2,
                           ...(isFinal?{animationDelay:`${idx*STAG+0.95}s`}:{})}}/>
                         <span style={{display:"block",fontSize:9.5,color:isFinal?"#f0e6d8":"#5b4d43",marginTop:5,lineHeight:1.35,
                           whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.memo||" "}</span>
                         <span style={{display:"flex",justifyContent:"space-between",fontSize:8.5,color:isFinal?"#c9b8a4":"#a08f7d",marginTop:2}}>
                           <span>{r.date}</span>
-                          <span style={{fontWeight:900,color:isFinal?"#D9A441":"#F59A23",letterSpacing:1}}>
+                          <span style={{fontWeight:900,color:isFinal?"#FF7900":"#FF7900",letterSpacing:1}}>
                             {isFinal?"ACHIEVED":`TRY ${String(stepNo).padStart(2,"0")}`}
                           </span>
                         </span>
