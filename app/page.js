@@ -64,9 +64,9 @@ const CSS = `
 .btn-ghost:hover{border-color:#FF7900;color:#FF7900;}
 .btn-ghost-danger{background:#fff;border:1px solid #e2d6c8;color:#8a7a6d;cursor:pointer;transition:all .15s;}
 .btn-ghost-danger:hover{border-color:#c0392b;color:#c0392b;}
-.chip{background:#fff;border:1px solid #e2d6c8;color:#5b4d43;cursor:pointer;transition:all .15s;}
+.chip{background:#fff;border:1px solid #e2d6c8;color:#5b4d43;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;}
 .chip:hover{border-color:#FF7900;}
-.chip-active{background:#E2D4BE;border:1px solid #b9a88f;color:#453730;}
+.chip-active{background:#E2D4BE;border:1px solid #b9a88f;color:#453730;white-space:nowrap;flex-shrink:0;}
 .chip-dashed{background:transparent;border:1px dashed #c9b8a8;color:#8a7a6d;cursor:pointer;}
 .pill{background:#F1E9DD;color:#5b4d43;border:1px solid transparent;cursor:pointer;min-width:38px;}
 .pill:hover{background:#e6dbc9;}
@@ -560,7 +560,7 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
   list.forEach(it=>{const recs=byNum[it.num]||[];if(recs.length===0)return;const hasDone=recs.some(r=>recType(r)==="done");tryN+=hasDone?recs.length-1:recs.length;});
   return (
     <div ref={boardRef} style={{background:"#fffdf8",border:"1px solid #eadfd0",borderRadius:24,
-      padding:"30px 26px 22px",position:"relative",overflow:"hidden",
+      padding:"30px 26px 36px",position:"relative",overflow:"hidden",
       boxShadow:"0 10px 40px rgba(69,55,48,.07)"}}>
       <div style={{position:"absolute",inset:10,border:"1.5px dashed #e8dcc8",borderRadius:16,pointerEvents:"none"}}/>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:8,position:"relative",zIndex:1,padding:"0 4px"}}>
@@ -627,9 +627,9 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
           );
         })}
       </div>
-      <div style={{marginTop:22,textAlign:"center",position:"relative",zIndex:1}}>
+      <div style={{marginTop:30,textAlign:"center",position:"relative",zIndex:1}}>
         <div style={{fontSize:10.5,color:"#b6a795",letterSpacing:3,fontWeight:700}}>100 POCKET LIST CLUB · 2026.07.25 — 11.01</div>
-        <div style={{fontSize:11,color:"#FF7900",fontWeight:700,marginTop:3}}>#100일포켓리스트 #{member?.name}의포켓</div>
+        <div style={{fontSize:11,color:"#FF7900",fontWeight:700,marginTop:4}}>#100일포켓리스트 #{member?.name}의포켓</div>
       </div>
     </div>
   );
