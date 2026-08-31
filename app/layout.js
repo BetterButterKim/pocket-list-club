@@ -8,7 +8,7 @@ export default function RootLayout({ children }) {
     <html lang="ko">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Black+Han+Sans&family=Cabin+Sketch:wght@400;700&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
           rel="stylesheet"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
