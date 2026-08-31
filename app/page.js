@@ -143,8 +143,11 @@ const CSS = `
     radial-gradient(1px 1px at 33% 70%,rgba(255,255,255,.45),transparent);}
 .plc-in{position:relative;z-index:2;padding:22px 22px 18px;}
 /* 전체 보드 */
-.ab-title{font-family:'Alfa Slab One',serif;text-align:center;white-space:nowrap;line-height:1;
-  text-shadow:0 0 6px rgba(255,255,255,.22);}
+.ab-title{font-family:'Cabin Sketch',cursive;font-weight:700;text-align:center;white-space:nowrap;
+  line-height:1;letter-spacing:.01em;text-shadow:0 0 6px rgba(255,255,255,.3);}
+.ab-members{text-align:center;color:rgba(242,239,228,.6);letter-spacing:.06em;margin-top:10px;}
+.ab-members b{font-weight:400;color:rgba(242,239,228,.88);}
+.ab-cols,.ab-cols *{font-family:'Gowun Dodum','Apple SD Gothic Neo',sans-serif;}
 .ab-rule{height:1px;margin-top:12px;opacity:.4;
   background:repeating-linear-gradient(90deg,#F2EFE4 0 12px,transparent 12px 16px);}
 .ab-cols{margin-top:14px;column-gap:26px;column-rule:1px dashed rgba(242,239,228,.2);}
@@ -162,10 +165,13 @@ const CSS = `
 .ab-done .ab-tx{opacity:.6;text-decoration:line-through;text-decoration-color:#FF7900;
   -webkit-text-decoration-color:#FF7900;text-decoration-thickness:2px;}
 .ab-nocat .ab-tx{color:#F2EFE4 !important;}
-.ab-tools{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-bottom:8px;font-size:12.5px;}
-.ab-tools button{background:none;border:none;cursor:pointer;color:#b6a795;font-size:12.5px;
-  border-bottom:1px dashed transparent;font-family:inherit;}
-.ab-tools button[aria-pressed="true"]{color:#453730;border-bottom-color:#c9b8a8;}
+.ab-tools{display:flex;justify-content:flex-end;align-items:center;gap:5px;margin-bottom:7px;}
+.ab-tools button{background:#F6F1E7;border:1px solid #EBE3D4;cursor:pointer;color:#c0b4a3;
+  font-size:10.5px;line-height:1;padding:4px 9px;border-radius:9999px;font-family:inherit;
+  transition:.15s;}
+.ab-tools button:hover{color:#8a7a6d;border-color:#ded3c1;}
+.ab-tools button[aria-pressed="true"]{background:#EFE7D8;border-color:#d9cbb6;color:#7a6b5c;}
+.ab-tools .ab-info{font-size:10px;color:#cec3b2;margin-left:3px;}
 /* 잠금 */
 .ab-lock{text-align:center;padding:56px 20px;}
 .ab-lock h2{font-size:20px;margin-bottom:8px;}
@@ -858,7 +864,7 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
 
 /* ---------- 전체 보드 (10명 × 10개 = 100개, 칠판) ---------- */
 function AllBoard({members,pockets,records}){
-  const wrapRef=useRef(null), colsRef=useRef(null), titleRef=useRef(null);
+  const wrapRef=useRef(null), colsRef=useRef(null), titleRef=useRef(null), memRef=useRef(null);
   const [showName,setShowName]=useState(false);
   const [showCat,setShowCat]=useState(true);
   const [info,setInfo]=useState("");
@@ -882,8 +888,9 @@ function AllBoard({members,pockets,records}){
     if(!cols||!wrap)return;
     if(ttl){
       ttl.style.fontSize="100px";
-      const px=Math.min(44,100*(cols.clientWidth*0.46)/(ttl.scrollWidth||1));
+      const px=Math.min(46,100*(cols.clientWidth*0.5)/(ttl.scrollWidth||1));
       ttl.style.fontSize=px.toFixed(1)+"px";
+      if(memRef.current)memRef.current.style.fontSize=Math.max(11,px*0.155).toFixed(1)+"px";
     }
     const w=window.innerWidth;
     const cands = w<560?[1,2] : w<820?[2,3] : w<1100?[3,4] : [3,4,5];
@@ -914,14 +921,17 @@ function AllBoard({members,pockets,records}){
   return (
     <div ref={wrapRef}>
       <div className="ab-tools">
-        <button aria-pressed={showCat} onClick={()=>setShowCat(v=>!v)}>카테고리 색</button>
-        <button aria-pressed={showName} onClick={()=>setShowName(v=>!v)}>이름</button>
-        <span style={{color:"#c3b6a4"}}>{info}</span>
+        <button aria-pressed={showCat} onClick={()=>setShowCat(v=>!v)}>색</button>
+        <button aria-pressed={showName} onClick={()=>setShowName(v=>!v)}>멤버</button>
+        {info&&<span className="ab-info">{info}</span>}
       </div>
       <div className={`plc-chalk${showName?"":" ab-hidename"}${showCat?"":" ab-nocat"}`}>
         <div className="plc-felt"/>
         <div className="plc-in">
           <h2 ref={titleRef} className="ab-title">OUR 100 POCKET LISTs</h2>
+          <p ref={memRef} className="ab-members">
+            {groups.map((g,i)=>(<span key={g.id}>{i>0&&" · "}<b>{g.name}</b></span>))}
+          </p>
           <div className="ab-rule"/>
           <div ref={colsRef} className="ab-cols" style={{columnCount:4,fontSize:19}}>
             {groups.map(g=>(
@@ -1028,6 +1038,11 @@ function JourneyPoster({member,item,records,onClose,onOpenRec}){
     calc();window.addEventListener("resize",calc);
     return ()=>window.removeEventListener("resize",calc);
   },[]);
+  useEffect(()=>{
+    const onKey=(e)=>{ if(e.key==="Escape")onClose(); };
+    window.addEventListener("keydown",onKey);
+    return ()=>window.removeEventListener("keydown",onKey);
+  },[onClose]);
   const rows=[];
   for(let i=0;i<steps.length;i+=perRow)rows.push(steps.slice(i,i+perRow));
   const tapeColors=["rgba(245,205,120,.65)","rgba(180,210,235,.6)","rgba(235,180,195,.55)"];
@@ -1037,28 +1052,35 @@ function JourneyPoster({member,item,records,onClose,onOpenRec}){
 
   return (
     <div className="overlay" onClick={onClose} style={{position:"fixed",inset:0,zIndex:46,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 12px",overflowY:"auto"}}>
-      <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:840,background:"#fffdf8",borderRadius:20,overflow:"hidden",boxShadow:"0 30px 80px rgba(0,0,0,.35)",position:"relative"}}>
+      <div onClick={e=>e.stopPropagation()} className={CHALK_BOARD?"plc-chalk":""}
+        style={CHALK_BOARD
+          ?{width:"100%",maxWidth:900,position:"relative",boxShadow:"0 30px 80px rgba(0,0,0,.45)"}
+          :{width:"100%",maxWidth:840,background:"#fffdf8",borderRadius:20,overflow:"hidden",boxShadow:"0 30px 80px rgba(0,0,0,.35)",position:"relative"}}>
+        {CHALK_BOARD&&<div className="plc-felt"/>}
         <button onClick={onClose} aria-label="닫기"
-          style={{position:"absolute",top:10,right:10,zIndex:10,background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.3)",
-            width:30,height:30,borderRadius:"50%",cursor:"pointer",fontSize:13,color:"#fff"}}>✕</button>
-        <div style={{background:"#453730",color:"#FAF6EF",padding:"16px 22px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+          style={{position:"absolute",top:CHALK_BOARD?20:10,right:CHALK_BOARD?22:10,zIndex:20,
+            background:"rgba(0,0,0,.28)",border:"1px solid rgba(242,239,228,.3)",
+            width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:15,color:"#F2EFE4"}}>✕</button>
+        <div style={CHALK_BOARD
+          ?{position:"relative",zIndex:2,color:"#F2EFE4",padding:"24px 26px 4px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}
+          :{background:"#453730",color:"#FAF6EF",padding:"16px 22px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
           <div>
-            <div style={{fontSize:9,letterSpacing:3,color:"#b6a795",fontWeight:700}}>100 POCKET LIST CLUB · POCKET JOURNEY</div>
-            <div style={{fontSize:16,fontWeight:800,marginTop:4,lineHeight:1.3}}>
-              <span className="slab" style={{color:"#FF7900",marginRight:6}}>No.{item.num}</span>{item.title||"이름 미설정"}
+            <div style={{fontSize:CHALK_BOARD?19:16,fontWeight:800,lineHeight:1.35,
+              textShadow:CHALK_BOARD?"0 0 5px rgba(255,255,255,.22)":undefined}}>
+              <span className="slab" style={{color:"#FF7900",marginRight:6}}>No.{String(item.num).padStart(2,"0")}</span>{item.title||"이름 미설정"}
             </div>
           </div>
-          <div style={{fontSize:11,color:"#cbbfae",display:"flex",gap:12,alignItems:"center"}}>
-            <span>by <b style={{color:"#FAF6EF"}}>{member?.name}</b></span>
-            <span>시도 <b style={{color:"#FAF6EF"}}>{tries.length}</b></span>
+          <div style={{fontSize:11.5,color:CHALK_BOARD?"rgba(242,239,228,.6)":"#cbbfae",display:"flex",gap:12,alignItems:"center"}}>
+            <span>by <b style={{color:"#F2EFE4"}}>{member?.name}</b></span>
+            <span>시도 <b style={{color:"#F2EFE4"}}>{tries.length}</b></span>
             {doneRec
               ?<span style={{color:"#FF7900",fontWeight:800}}>✦ 달성 {doneRec.date}</span>
               :<span>도전 중</span>}
           </div>
         </div>
-        <div style={{padding:"24px 26px 18px"}}>
+        <div style={CHALK_BOARD?{position:"relative",zIndex:2,padding:"22px 26px 22px"}:{padding:"24px 26px 18px"}}>
           {steps.length===0?(
-            <div style={{textAlign:"center",padding:"34px 10px",color:"#b6a795",fontSize:13}}>
+            <div style={{textAlign:"center",padding:"34px 10px",color:CHALK_BOARD?"rgba(242,239,228,.55)":"#b6a795",fontSize:13}}>
               아직 기록이 없어요.<br/>슬랙에서 <b style={{color:"#e06800"}}>/시도</b> 로 첫 폴라로이드를 붙여보세요!
             </div>
           ):rows.map((row,ri)=>{
@@ -1105,13 +1127,17 @@ function JourneyPoster({member,item,records,onClose,onOpenRec}){
                           </span>
                         </span>
                       </span>
-                      {ci<row.length-1&&<span className="journey-arrow" style={{color:"#d9cbbd",fontSize:15,fontWeight:900,marginTop:-16,animationDelay:`${(idx+1)*STAG}s`}}>{rev?"‹":"›"}</span>}
+                      {ci<row.length-1&&<span className="journey-arrow" style={{width:26,height:0,marginTop:-16,
+                        borderTop:`2px dashed ${CHALK_BOARD?"rgba(242,239,228,.4)":"#d9cbbd"}`,
+                        animationDelay:`${(idx+1)*STAG}s`}}/>}
                     </span>
                   );
                 })}
               </div>
             );
           })}
+          {CHALK_BOARD&&<div style={{textAlign:"center",marginTop:14,fontSize:10.5,letterSpacing:3,
+            color:"rgba(242,239,228,.4)",fontWeight:700}}>100 POCKET LIST CLUB · 2026.07.25 — 11.01</div>}
         </div>
       </div>
     </div>
