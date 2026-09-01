@@ -144,19 +144,19 @@ const CSS = `
 .plc-in{position:relative;z-index:2;padding:22px 22px 18px;}
 /* 전체 보드 */
 .ab-title{font-family:'Cabin Sketch',cursive;font-weight:700;text-align:center;white-space:nowrap;
-  line-height:1;letter-spacing:.01em;text-shadow:0 0 6px rgba(255,255,255,.3);}
-.ab-members{text-align:center;color:rgba(242,239,228,.62);letter-spacing:.05em;margin-top:2px;}
+  line-height:.92;letter-spacing:.01em;margin:0;text-shadow:0 0 6px rgba(255,255,255,.3);}
+.ab-members{text-align:center;color:rgba(242,239,228,.62);letter-spacing:.05em;margin-top:-6px;}
 .ab-members b{font-weight:400;color:rgba(242,239,228,.88);}
 .ab-cols,.ab-cols *{font-family:'Gowun Dodum','Apple SD Gothic Neo',sans-serif;}
 .ab-gauge{display:flex;align-items:center;justify-content:flex-end;gap:9px;margin-top:16px;}
 .ab-gauge-t{font-size:11.5px;color:rgba(242,239,228,.58);white-space:nowrap;}
 .ab-gauge-bar{display:block;width:130px;height:7px;border:1px dashed rgba(242,239,228,.45);
   border-radius:6px;overflow:hidden;}
-.ab-gauge-bar>span{display:block;height:100%;
-  background:repeating-linear-gradient(115deg,#FF7900 0 5px,rgba(255,121,0,.45) 5px 10px);}
+.ab-gauge-bar>span{display:block;height:100%;background:#FF7900;border-radius:6px;}
 .ab-rule{height:1px;margin-top:8px;opacity:.4;
   background:repeating-linear-gradient(90deg,#F2EFE4 0 12px,transparent 12px 16px);}
-.ab-cols{margin-top:14px;column-gap:26px;column-rule:1px dashed rgba(242,239,228,.2);}
+.ab-cols{margin-top:14px;column-gap:30px;column-rule:1px dashed rgba(242,239,228,.2);
+  padding-right:2px;}
 .ab-grp{display:block;break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;}
 .ab-name{font-size:1.3em;color:#F2EFE4;opacity:.95;margin:1.05em 0 .42em;
   text-shadow:0 0 5px rgba(255,255,255,.28);}
@@ -171,9 +171,11 @@ const CSS = `
 .ab-done .ab-tx{opacity:.6;text-decoration:line-through;text-decoration-color:#FF7900;
   -webkit-text-decoration-color:#FF7900;text-decoration-thickness:2px;}
 .ab-nocat .ab-tx{color:#F2EFE4 !important;}
-.ab-board{margin-left:14px;margin-right:14px;}
-@media(max-width:640px){.ab-board{margin-left:6px;margin-right:6px;}}
-.ab-tools{display:flex;justify-content:flex-end;align-items:center;gap:5px;margin-bottom:7px;margin-right:14px;}
+.ab-board{margin-left:22px;margin-right:22px;}
+.ab-board .plc-in{padding:26px 34px 22px;}
+@media(max-width:900px){.ab-board .plc-in{padding:20px 20px 18px;}}
+@media(max-width:640px){.ab-board{margin-left:8px;margin-right:8px;}}
+.ab-tools{display:flex;justify-content:flex-end;align-items:center;gap:5px;margin-bottom:7px;margin-right:22px;}
 .ab-tools button{background:#F6F1E7;border:1px solid #EBE3D4;cursor:pointer;color:#c0b4a3;
   font-size:10.5px;line-height:1;padding:4px 9px;border-radius:9999px;font-family:inherit;
   transition:.15s;}
@@ -810,7 +812,7 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
         <span style={{fontSize:11.5,color:CHALK_BOARD?"rgba(242,239,228,.55)":"#8a7a6d"}}><b style={{fontSize:15,color:CHALK_BOARD?"#F2EFE4":"#453730",marginRight:2}}>{tryN}</b>번의 시도</span>
         <span style={{fontSize:11.5,color:CHALK_BOARD?"rgba(242,239,228,.55)":"#8a7a6d"}}><b style={{fontSize:15,color:CHALK_BOARD?"#F2EFE4":"#453730",marginRight:2}}>{10-doneN}</b>남은 포켓</span>
       </div>
-      <div className="board-grid" style={{display:"grid",gap:CHALK_BOARD?"30px 14px":13,
+      <div className="board-grid" style={{display:"grid",gap:CHALK_BOARD?"36px 20px":13,
         gridAutoRows:CHALK_BOARD?"1fr":undefined,position:"relative",zIndex:1}}>
         {list.map(it=>{
           const recs=byNum[it.num]||[];
@@ -840,7 +842,7 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
               style={{aspectRatio:"3/4",borderRadius:14,cursor:"pointer",textAlign:"left",
                 background:isDone?"#453730":"#fff",border:`1px solid ${isDone?"#453730":"#eadfd0"}`,
                 boxShadow:isDone?"0 6px 18px rgba(69,55,48,.22)":"0 3px 10px rgba(69,55,48,.06)",
-                padding:"9px 9px 6px",position:"relative"}}>
+                padding:CHALK_BOARD?"12px 12px 11px":"9px 9px 6px",position:"relative"}}>
               <span style={{position:"relative",display:"block",width:"100%",aspectRatio:"1/1"}}>
                 {behind.map((r,i)=>(
                   <span key={r.id} style={{position:"absolute",inset:0,background:"#fff",border:"1px solid #eee4d4",borderRadius:4,
@@ -862,8 +864,9 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
                   ?<span style={{fontSize:9.5,fontWeight:800,background:"#FF7900",color:"#fff",borderRadius:9999,padding:"2px 8px",letterSpacing:.5}}>DONE</span>
                   :<span style={{fontSize:9.5,fontWeight:800,background:"#fff2e6",color:"#e06800",border:"1px solid #ffc999",borderRadius:9999,padding:"2px 8px"}}>시도 ×{tries}</span>}
               </span>
-              <span style={{display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden",
-                fontSize:10,color:isDone?"#e8dfd2":"#5b4d43",lineHeight:1.35,marginTop:5,minHeight:27}}>{it.title||"이름 미설정"}</span>
+              <span style={{display:"-webkit-box",WebkitLineClamp:CHALK_BOARD?3:2,WebkitBoxOrient:"vertical",overflow:"hidden",
+                fontSize:CHALK_BOARD?11:10,color:isDone?"#e8dfd2":"#5b4d43",lineHeight:1.4,marginTop:6,
+                minHeight:CHALK_BOARD?46:27}}>{it.title||"이름 미설정"}</span>
             </button>
           );
           return CHALK_BOARD
