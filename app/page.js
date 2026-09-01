@@ -95,9 +95,9 @@ const CSS = `
 .num-choice{text-align:left;overflow:hidden;cursor:pointer;transition:all .15s;background:#fff;border:1px solid #e2d6c8;color:#5b4d43;}
 .num-choice:hover{border-color:#FF7900;}
 .num-choice.on{background:#E2D4BE;border:1px solid #b9a88f;color:#453730;}
-.board-grid{grid-template-columns:repeat(5,1fr);}
-@media(max-width:640px){.board-grid{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:420px){.board-grid{grid-template-columns:repeat(2,1fr);}}
+.board-grid{grid-template-columns:repeat(5,minmax(0,1fr));}
+@media(max-width:1024px){.board-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:620px){.board-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @keyframes plc-drop{0%{opacity:0;transform:translateY(-22px) scale(1.06) rotate(var(--tilt,0deg));}60%{opacity:1;transform:translateY(3px) scale(.98) rotate(var(--tilt,0deg));}100%{opacity:1;transform:translateY(0) scale(1) rotate(var(--tilt,0deg));}}
 @keyframes plc-env-land{0%{opacity:0;transform:translateY(-30px) scale(1.08) rotate(var(--tilt,0deg));}50%{opacity:1;transform:translateY(4px) scale(.97) rotate(var(--tilt,0deg));}70%{transform:translateY(-2px) scale(1.01) rotate(var(--tilt,0deg));}100%{opacity:1;transform:translateY(0) scale(1) rotate(var(--tilt,0deg));}}
 @keyframes plc-flap{0%{transform:perspective(200px) rotateX(0deg);opacity:1;}45%{opacity:.5;}100%{transform:perspective(200px) rotateX(-175deg);opacity:0;}}
@@ -171,7 +171,7 @@ const CSS = `
 .ab-done .ab-tx{opacity:.6;text-decoration:line-through;text-decoration-color:#FF7900;
   -webkit-text-decoration-color:#FF7900;text-decoration-thickness:2px;}
 .ab-nocat .ab-tx{color:#F2EFE4 !important;}
-.ab-board{margin-left:22px;margin-right:22px;}
+.ab-board{width:auto;margin-left:22px;margin-right:22px;}
 .ab-board .plc-in{padding:26px 34px 22px;}
 @media(max-width:900px){.ab-board .plc-in{padding:20px 20px 18px;}}
 @media(max-width:640px){.ab-board{margin-left:8px;margin-right:8px;}}
@@ -821,7 +821,8 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
           if(recs.length===0){
             const card=(
               <button key={it.num} onClick={()=>onOpen(it.num)}
-                style={{aspectRatio:"3/4",borderRadius:14,
+                style={{aspectRatio:CHALK_BOARD?undefined:"3/4",minHeight:CHALK_BOARD?200:undefined,
+                  overflow:"hidden",borderRadius:14,
                   background:CHALK_BOARD?"rgba(255,255,255,.06)":"transparent",
                   border:`1.5px dashed ${CHALK_BOARD?"rgba(242,239,228,.3)":"#d9cbbd"}`,
                   display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,cursor:"pointer",padding:6}}>
@@ -839,10 +840,11 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
           const behind=recs.slice(-3,-1).reverse();
           const card=(
             <button key={it.num} onClick={()=>onOpen(it.num)}
-              style={{aspectRatio:"3/4",borderRadius:14,cursor:"pointer",textAlign:"left",
+              style={{aspectRatio:CHALK_BOARD?undefined:"3/4",overflow:"hidden",
+                borderRadius:14,cursor:"pointer",textAlign:"left",
                 background:isDone?"#453730":"#fff",border:`1px solid ${isDone?"#453730":"#eadfd0"}`,
                 boxShadow:isDone?"0 6px 18px rgba(69,55,48,.22)":"0 3px 10px rgba(69,55,48,.06)",
-                padding:CHALK_BOARD?"12px 12px 11px":"9px 9px 6px",position:"relative"}}>
+                padding:CHALK_BOARD?"12px 12px 16px":"9px 9px 6px",position:"relative"}}>
               <span style={{position:"relative",display:"block",width:"100%",aspectRatio:"1/1"}}>
                 {behind.map((r,i)=>(
                   <span key={r.id} style={{position:"absolute",inset:0,background:"#fff",border:"1px solid #eee4d4",borderRadius:4,
@@ -866,7 +868,7 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
               </span>
               <span style={{display:"-webkit-box",WebkitLineClamp:CHALK_BOARD?3:2,WebkitBoxOrient:"vertical",overflow:"hidden",
                 fontSize:CHALK_BOARD?11:10,color:isDone?"#e8dfd2":"#5b4d43",lineHeight:1.4,marginTop:6,
-                minHeight:CHALK_BOARD?46:27}}>{it.title||"이름 미설정"}</span>
+                minHeight:CHALK_BOARD?48:27}}>{it.title||"이름 미설정"}</span>
             </button>
           );
           return CHALK_BOARD
