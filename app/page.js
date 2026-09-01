@@ -145,10 +145,16 @@ const CSS = `
 /* 전체 보드 */
 .ab-title{font-family:'Cabin Sketch',cursive;font-weight:700;text-align:center;white-space:nowrap;
   line-height:1;letter-spacing:.01em;text-shadow:0 0 6px rgba(255,255,255,.3);}
-.ab-members{text-align:center;color:rgba(242,239,228,.6);letter-spacing:.06em;margin-top:10px;}
+.ab-members{text-align:center;color:rgba(242,239,228,.62);letter-spacing:.05em;margin-top:2px;}
 .ab-members b{font-weight:400;color:rgba(242,239,228,.88);}
 .ab-cols,.ab-cols *{font-family:'Gowun Dodum','Apple SD Gothic Neo',sans-serif;}
-.ab-rule{height:1px;margin-top:12px;opacity:.4;
+.ab-gauge{display:flex;align-items:center;justify-content:flex-end;gap:9px;margin-top:16px;}
+.ab-gauge-t{font-size:11.5px;color:rgba(242,239,228,.58);white-space:nowrap;}
+.ab-gauge-bar{display:block;width:130px;height:7px;border:1px dashed rgba(242,239,228,.45);
+  border-radius:6px;overflow:hidden;}
+.ab-gauge-bar>span{display:block;height:100%;
+  background:repeating-linear-gradient(115deg,#FF7900 0 5px,rgba(255,121,0,.45) 5px 10px);}
+.ab-rule{height:1px;margin-top:8px;opacity:.4;
   background:repeating-linear-gradient(90deg,#F2EFE4 0 12px,transparent 12px 16px);}
 .ab-cols{margin-top:14px;column-gap:26px;column-rule:1px dashed rgba(242,239,228,.2);}
 .ab-grp{display:block;break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;}
@@ -165,7 +171,9 @@ const CSS = `
 .ab-done .ab-tx{opacity:.6;text-decoration:line-through;text-decoration-color:#FF7900;
   -webkit-text-decoration-color:#FF7900;text-decoration-thickness:2px;}
 .ab-nocat .ab-tx{color:#F2EFE4 !important;}
-.ab-tools{display:flex;justify-content:flex-end;align-items:center;gap:5px;margin-bottom:7px;}
+.ab-board{margin-left:14px;margin-right:14px;}
+@media(max-width:640px){.ab-board{margin-left:6px;margin-right:6px;}}
+.ab-tools{display:flex;justify-content:flex-end;align-items:center;gap:5px;margin-bottom:7px;margin-right:14px;}
 .ab-tools button{background:#F6F1E7;border:1px solid #EBE3D4;cursor:pointer;color:#c0b4a3;
   font-size:10.5px;line-height:1;padding:4px 9px;border-radius:9999px;font-family:inherit;
   transition:.15s;}
@@ -177,12 +185,15 @@ const CSS = `
 .ab-lock h2{font-size:20px;margin-bottom:8px;}
 .ab-lock p{font-size:13px;color:rgba(242,239,228,.6);line-height:1.8;margin-bottom:22px;}
 .ab-lock .row{display:flex;gap:8px;justify-content:center;}
-.ab-lock input{flex:1;max-width:220px;border-radius:9999px;border:1px solid rgba(242,239,228,.35);
-  background:rgba(0,0,0,.22);color:#F2EFE4;padding:10px 16px;font-size:14px;outline:none;font-family:inherit;}
+.ab-lock input{flex:1;max-width:240px;border-radius:9999px;border:1px solid rgba(242,239,228,.32);
+  background:rgba(0,0,0,.18);color:#F2EFE4;padding:11px 20px;font-size:14.5px;outline:none;font-family:inherit;}
+.ab-lock input::placeholder{color:rgba(242,239,228,.4);}
+.ab-lock .row{align-items:center;}
 .ab-lock input:focus{border-color:#FF7900;}
 .ab-lock .err{color:#FFB08A;font-size:12.5px;margin-top:12px;min-height:18px;}
 /* 압정으로 꽂은 카드 */
-.pinned{position:relative;padding-top:16px;}
+.pinned{position:relative;padding-top:16px;height:100%;}
+.pinned>button{height:calc(100% - 16px);}
 .pinned>button{transform:rotate(var(--tl,0deg));transform-origin:50% 0;transition:transform .18s ease;}
 .pinned:hover>button{transform:rotate(var(--tl,0deg)) translateY(-3px);}
 .plc-pin{position:absolute;left:50%;top:-4px;transform:translateX(-50%);z-index:9;pointer-events:none;}
@@ -477,7 +488,8 @@ export default function Page() {
           item={curPockets.find(it=>it.num===journeyNum)||{num:journeyNum,title:""}}
           records={records.filter(r=>r.member_id===boardMember&&r.num===journeyNum)}
           onClose={()=>setJourneyNum(null)}
-          onOpenRec={(r)=>{setJourneyNum(null);setViewRec(r);}}/>
+          onOpenRec={(r)=>setViewRec(r)}
+          escActive={!viewRec}/>
       )}
 
       {viewRec&&<Lightbox rec={viewRec} member={memberOf(viewRec.member_id)} onClose={()=>setViewRec(null)}
@@ -525,8 +537,13 @@ function RecordCard({rec,member,showName,isMine,onDelete,onOpen}) {
 
 function Lightbox({rec,member,onClose,onEdit,onDelete}) {
   const fname=`PLC_${member?.name||"member"}_${rec.num}_${rec.date}.jpg`;
+  useEffect(()=>{
+    const onKey=(e)=>{ if(e.key==="Escape"){e.stopPropagation();onClose();} };
+    window.addEventListener("keydown",onKey);
+    return ()=>window.removeEventListener("keydown",onKey);
+  },[onClose]);
   return (
-    <div className="overlay" onClick={onClose} style={{position:"fixed",inset:0,zIndex:45,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+    <div className="overlay" onClick={onClose} style={{position:"fixed",inset:0,zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
       <div className="sheet" onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:520,maxHeight:"94vh",overflowY:"auto",borderRadius:20,padding:16}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
           <span style={{fontWeight:900,fontSize:15}}>{member?`${member.name} · `:""}#{rec.num}{rec.source==="slack"?<span className="t-faint" style={{fontSize:11,fontWeight:400,marginLeft:6}}>슬랙 인증</span>:null}</span>
@@ -793,7 +810,8 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
         <span style={{fontSize:11.5,color:CHALK_BOARD?"rgba(242,239,228,.55)":"#8a7a6d"}}><b style={{fontSize:15,color:CHALK_BOARD?"#F2EFE4":"#453730",marginRight:2}}>{tryN}</b>번의 시도</span>
         <span style={{fontSize:11.5,color:CHALK_BOARD?"rgba(242,239,228,.55)":"#8a7a6d"}}><b style={{fontSize:15,color:CHALK_BOARD?"#F2EFE4":"#453730",marginRight:2}}>{10-doneN}</b>남은 포켓</span>
       </div>
-      <div className="board-grid" style={{display:"grid",gap:CHALK_BOARD?"30px 14px":13,position:"relative",zIndex:1}}>
+      <div className="board-grid" style={{display:"grid",gap:CHALK_BOARD?"30px 14px":13,
+        gridAutoRows:CHALK_BOARD?"1fr":undefined,position:"relative",zIndex:1}}>
         {list.map(it=>{
           const recs=byNum[it.num]||[];
           const isDone=recs.some(r=>recType(r)==="done");
@@ -865,6 +883,8 @@ function PocketBoard({member,list,records,onOpen,boardRef}) {
 /* ---------- 전체 보드 (10명 × 10개 = 100개, 칠판) ---------- */
 function AllBoard({members,pockets,records}){
   const wrapRef=useRef(null), colsRef=useRef(null), titleRef=useRef(null), memRef=useRef(null);
+  const boardRef=useRef(null);
+  const [saving,setSaving]=useState(false);
   const [showName,setShowName]=useState(false);
   const [showCat,setShowCat]=useState(true);
   const [info,setInfo]=useState("");
@@ -890,7 +910,7 @@ function AllBoard({members,pockets,records}){
       ttl.style.fontSize="100px";
       const px=Math.min(46,100*(cols.clientWidth*0.5)/(ttl.scrollWidth||1));
       ttl.style.fontSize=px.toFixed(1)+"px";
-      if(memRef.current)memRef.current.style.fontSize=Math.max(11,px*0.155).toFixed(1)+"px";
+      if(memRef.current)memRef.current.style.fontSize=Math.max(13,px*0.215).toFixed(1)+"px";
     }
     const w=window.innerWidth;
     const cands = w<560?[1,2] : w<820?[2,3] : w<1100?[3,4] : [3,4,5];
@@ -925,13 +945,19 @@ function AllBoard({members,pockets,records}){
         <button aria-pressed={showName} onClick={()=>setShowName(v=>!v)}>멤버</button>
         {info&&<span className="ab-info">{info}</span>}
       </div>
-      <div className={`plc-chalk${showName?"":" ab-hidename"}${showCat?"":" ab-nocat"}`}>
+      <div ref={boardRef} className={`plc-chalk ab-board${showName?"":" ab-hidename"}${showCat?"":" ab-nocat"}`}>
         <div className="plc-felt"/>
         <div className="plc-in">
           <h2 ref={titleRef} className="ab-title">OUR 100 POCKET LISTs</h2>
           <p ref={memRef} className="ab-members">
             {groups.map((g,i)=>(<span key={g.id}>{i>0&&" · "}<b>{g.name}</b></span>))}
           </p>
+          <div className="ab-gauge">
+            <span className="ab-gauge-t">{doneN} / {total} 달성</span>
+            <span className="ab-gauge-bar">
+              <span style={{width:`${total?doneN/total*100:0}%`}}/>
+            </span>
+          </div>
           <div className="ab-rule"/>
           <div ref={colsRef} className="ab-cols" style={{columnCount:4,fontSize:19}}>
             {groups.map(g=>(
@@ -951,19 +977,22 @@ function AllBoard({members,pockets,records}){
               </div>
             ))}
           </div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:20,marginTop:14}}>
-            <div style={{flex:1,maxWidth:280}}>
-              <p style={{fontSize:11.5,color:"rgba(242,239,228,.55)",marginBottom:5}}>
-                {doneN} / {total} 달성</p>
-              <div style={{height:7,border:"1px dashed rgba(242,239,228,.45)",borderRadius:6,overflow:"hidden"}}>
-                <div style={{height:"100%",width:`${total?doneN/total*100:0}%`,
-                  background:"repeating-linear-gradient(115deg,#FF7900 0 5px,rgba(255,121,0,.45) 5px 10px)"}}/>
-              </div>
-            </div>
-            <p style={{fontSize:11,letterSpacing:2,color:"rgba(242,239,228,.5)",whiteSpace:"nowrap"}}>
-              100 POCKET LIST CLUB · 2026.07.25 — 11.01</p>
-          </div>
+          <p style={{fontSize:11,letterSpacing:2.5,color:"rgba(242,239,228,.45)",
+            textAlign:"center",marginTop:16,fontWeight:700}}>
+            100 POCKET LIST CLUB · 2026.07.25 — 11.01</p>
         </div>
+      </div>
+      <div style={{marginTop:12,display:"flex",justifyContent:"center"}}>
+        <button disabled={saving} onClick={async()=>{
+            if(!boardRef.current||saving)return;
+            setSaving(true);
+            try{ await downloadBoardPng(boardRef.current,"PLC_100_pocket_lists.png"); }
+            catch(e){ console.error(e); }
+            finally{ setSaving(false); }
+          }}
+          className="btn-ghost" style={{borderRadius:9999,padding:"8px 20px",fontSize:13,fontWeight:700,opacity:saving?0.6:1}}>
+          {saving?"저장 중…":"📥 100 포켓리스트 이미지 저장"}
+        </button>
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:14,marginTop:12,fontSize:12.5,color:"#8a7a6d"}}>
         {Object.keys(CAT_META).map(k=>(
@@ -993,7 +1022,10 @@ function AllBoardLock({onOpen}){
           <input type="password" value={pw} placeholder="비밀 암호" autoComplete="off"
             onChange={e=>{setPw(e.target.value);setErr("");}}
             onKeyDown={e=>{if(e.key==="Enter")go();}}/>
-          <button className="btn-primary" onClick={go}>열기</button>
+          <button onClick={go} style={{border:"none",borderRadius:9999,padding:"11px 30px",
+            background:"linear-gradient(180deg,#FF9A3D,#FF7900)",color:"#fff",fontSize:15,fontWeight:800,
+            fontFamily:"inherit",cursor:"pointer",letterSpacing:.5,
+            boxShadow:"0 4px 12px rgba(255,121,0,.35),inset 0 1px 0 rgba(255,255,255,.35)"}}>열기</button>
         </div>
         <p className="err">{err}</p>
       </div>
@@ -1027,7 +1059,7 @@ async function downloadBoardPng(boardEl,filename){
 const CONFETTI_PIECES=Array.from({length:24},(_,i)=>{const a=(i/24)*Math.PI*2;const d=35+(i%5)*12;return{cx:Math.cos(a)*d,cy:Math.sin(a)*d*0.8-20,cr:(i%2===0?1:-1)*(180+i*47),color:['#FF7900','#1560BC','#FF9F40','#A8D8EA','#fff','#FFB366'][i%6],w:i%3===0?5:3+i%3,h:i%3===0?5:5+i%4,br:i%3===0?'50%':'1px',d:i*0.02};});
 
 /* ================= 여정 포스터 (가로 스네이크 맵) ================= */
-function JourneyPoster({member,item,records,onClose,onOpenRec}){
+function JourneyPoster({member,item,records,onClose,onOpenRec,escActive=true}){
   const recs=records.slice().sort(recSortAsc);
   const tries=recs.filter(r=>recType(r)==="try");
   const doneRec=recs.filter(r=>recType(r)==="done").slice(-1)[0]||null;
@@ -1039,10 +1071,11 @@ function JourneyPoster({member,item,records,onClose,onOpenRec}){
     return ()=>window.removeEventListener("resize",calc);
   },[]);
   useEffect(()=>{
+    if(!escActive)return;                 /* 인증 카드가 열려 있으면 그쪽이 먼저 닫힌다 */
     const onKey=(e)=>{ if(e.key==="Escape")onClose(); };
     window.addEventListener("keydown",onKey);
     return ()=>window.removeEventListener("keydown",onKey);
-  },[onClose]);
+  },[onClose,escActive]);
   const rows=[];
   for(let i=0;i<steps.length;i+=perRow)rows.push(steps.slice(i,i+perRow));
   const tapeColors=["rgba(245,205,120,.65)","rgba(180,210,235,.6)","rgba(235,180,195,.55)"];
@@ -1058,9 +1091,9 @@ function JourneyPoster({member,item,records,onClose,onOpenRec}){
           :{width:"100%",maxWidth:840,background:"#fffdf8",borderRadius:20,overflow:"hidden",boxShadow:"0 30px 80px rgba(0,0,0,.35)",position:"relative"}}>
         {CHALK_BOARD&&<div className="plc-felt"/>}
         <button onClick={onClose} aria-label="닫기"
-          style={{position:"absolute",top:CHALK_BOARD?20:10,right:CHALK_BOARD?22:10,zIndex:20,
-            background:"rgba(0,0,0,.28)",border:"1px solid rgba(242,239,228,.3)",
-            width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:15,color:"#F2EFE4"}}>✕</button>
+          style={{position:"absolute",top:CHALK_BOARD?20:10,right:CHALK_BOARD?24:10,zIndex:20,
+            background:"none",border:"none",padding:"0 4px",
+            cursor:"pointer",fontSize:22,lineHeight:1,color:CHALK_BOARD?"#F2EFE4":"#fff"}}>✕</button>
         <div style={CHALK_BOARD
           ?{position:"relative",zIndex:2,color:"#F2EFE4",padding:"24px 26px 4px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}
           :{background:"#453730",color:"#FAF6EF",padding:"16px 22px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
