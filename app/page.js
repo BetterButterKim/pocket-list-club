@@ -50,7 +50,7 @@ const ALL_BOARD      = true;        // '전체 보드' 탭 추가
 const CHALK_BOARD    = true;        // 멤버 포켓 보드를 칠판+압정으로
 const SHOW_DEBUG     = false;       // 전체 보드에 '자동 N단 nnpx' 표시
 const ALL_BOARD_PASSWORD = process.env.NEXT_PUBLIC_ALL_BOARD_PASSWORD || "PLC100";
-const ALL_BOARD_OPEN_AT  = "2026-09-04";   // 이 날짜부터는 암호 없이 열림
+const ALL_BOARD_OPEN_AT  = "2026-09-05";   // 이 날짜부터는 암호 없이 열림
 
 /* ================= 로컬 신원 (본인 확인용) ================= */
 const ME_KEY = "plc-me-id";
