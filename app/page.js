@@ -195,7 +195,7 @@ const CSS = `
 .ab-lock .err{color:#FFB08A;font-size:12.5px;margin-top:12px;min-height:18px;}
 /* 압정으로 꽂은 카드 */
 .pinned{position:relative;padding-top:16px;height:100%;}
-.pinned>button{height:calc(100% - 16px);}
+.pinned>button{width:100%;height:calc(100% - 16px);box-sizing:border-box;}
 .pinned>button{transform:rotate(var(--tl,0deg));transform-origin:50% 0;transition:transform .18s ease;}
 .pinned:hover>button{transform:rotate(var(--tl,0deg)) translateY(-3px);}
 .plc-pin{position:absolute;left:50%;top:-4px;transform:translateX(-50%);z-index:9;pointer-events:none;}
